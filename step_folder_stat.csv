@@ -1,10 +1,5 @@
-FACE TYPE,COUNT
-Geom_Plane,156
-Geom_CylindricalSurface,98
-Geom_BSplineSurface,20
-Geom_ConicalSurface,8
-Geom_ToroidalSurface,1
-EDGE TYPE,COUNT
-Geom_Line,838
-Geom_Circle,493
-Geom_BSplineCurve,176
+File/Geom_TYPE,Geom_BSplineSurface,Geom_ConicalSurface,Geom_CylindricalSurface,Geom_Plane,Geom_ToroidalSurface,Geom_BSplineCurve,Geom_Circle,Geom_Line
+F01,0,4,91,140,0,24,441,820
+F02,5,4,7,7,1,32,52,16
+F03,15,0,0,9,0,120,0,2
+TOTAL,20,8,98,156,1,176,493,838

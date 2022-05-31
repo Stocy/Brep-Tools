@@ -138,26 +138,49 @@ void StepFolder_Stats(string folder_path) {
 
     //computing stats
     cout << "------------------------------------------------------" << endl;
+    int file_count(0);
+    for(auto& p: fs::directory_iterator(folder_path))++file_count;
+
     for(auto& p: fs::directory_iterator(folder_path)){
         cout << p.path().filename() << '\n';
         Stats_TopoShapes(ReadStep(p.path()), false);
     }
+    map<string,int> totFace, totEdge;
+    totFace.insert(faceType_count.begin(),faceType_count.end());
+    totEdge.insert(edgeType_count.begin(),edgeType_count.end());
+
 
     //storing stats
     string stat_file(string(SRCDIR)+"/step_folder_stat.csv");
     stats.open(stat_file);
 
-    stats << "FACE TYPE,COUNT" << endl;
-    vector<pair<string,int>> sortedFTC = sort_map(faceType_count);
-    for (auto it = sortedFTC.begin(); it!= sortedFTC.end(); ++it){
-        stats << it->first << "," << it->second << endl;
+    string firstLine ("File/Geom_TYPE,");
+    for(auto it = totFace.begin(); it != totFace.end(); ++it) firstLine += string(it->first) + ",";
+    for(auto it = totEdge.begin(); it != totEdge.end(); ++it) firstLine += string(it->first) + ",";
+
+    firstLine.pop_back();
+    stats << firstLine << endl;
+
+    int i=0;
+    for(auto& p: fs::directory_iterator(folder_path)){
+        for (auto it = faceType_count.begin(); it!=faceType_count.end(); ++it) it->second=0;
+        for (auto it = edgeType_count.begin(); it!=edgeType_count.end(); ++it) it->second=0;
+        Stats_TopoShapes(ReadStep(p.path()), false);
+        //string line( string(p.path().filename()) + ",");
+        std::ostringstream file_number;
+        file_number << std::setw(to_string(file_count).size() + 1) << std::setfill('0') << ++i;
+        string line( "F" +file_number.str() + ",");
+        for (auto it = faceType_count.begin(); it!=faceType_count.end(); ++it) line += to_string(it->second) + ",";
+        for (auto it = edgeType_count.begin(); it!=edgeType_count.end(); ++it) line += to_string(it->second) + ",";
+        line.pop_back();
+        stats << line << endl;
     }
 
-    stats << "EDGE TYPE,COUNT" << endl;
-    vector<pair<string,int>> sortedETC = sort_map(edgeType_count);
-    for (auto it = sortedETC.begin(); it!= sortedETC.end(); ++it){
-        stats << it->first << "," << it->second << endl;
-    }
+    string line( "TOTAL,");
+    for(auto it = totFace.begin(); it != totFace.end(); ++it) line += to_string(it->second) + ",";
+    for(auto it = totEdge.begin(); it != totEdge.end(); ++it) line += to_string(it->second) + ",";
+    line.pop_back();
+    stats << line << endl;
 
     stats.close();
     cout << "------------------------------------------------------" << endl;
