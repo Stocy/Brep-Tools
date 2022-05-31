@@ -1,10 +1,12 @@
 # Brep-Tools
 ## Utiliser BRep tool pour recuperer des informations sur un ensemeble de fichiers STEP :
 
--mettre dans les fichiers step dans le dossier step_files
+- Mettre dans les fichiers step dans le dossier step_files
 
--creer un dossier build, s'y rendre à l'aide d'un terminal
+- Creer un dossier build, s'y rendre à l'aide d'un terminal
 
--configurer et compiler avec cmake.. && make
+- Configurer et compiler avec cmake.. && make
 
--exécuter occ_test
+  (si il y a des erreurs cmake voir CmakeList ou avec Cmake-gui)
+
+- Exécuter occ_test dans build
