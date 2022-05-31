@@ -7,68 +7,41 @@
 #include <algorithm>
 #include <STEPControl_Writer.hxx>
 #include <STEPControl_Reader.hxx>
+#include <Interface_Static.hxx>
+#include <Geom_Plane.hxx>
+
+#include <iostream>
+#include <Standard_Handle.hxx>
+#include <StepToGeom.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <BRep_Tool.hxx>
+#include <vector>
+#include <TopoDS_Shape.hxx>
+
+#include <map>
+#include <filesystem>
+#include <Interface_Static.hxx>
+
 using namespace std;
-map<string,int> edgeType_count, faceType_count;
+
+/**
+ * Compute stats for a TopoDS shape, bool to turn verbose on or off
+ * @param shape the shape to gather stat from
+ */
 void Stats_TopoShapes(const TopoDS_Shape &shape, bool = true);
+
+/**
+ * Compute step files stats and store them in a csv file
+ * @param folder_path folder path containing step files
+ */
 void StepFolder_Stats(string=string(SRCDIR)+"/step_files");
-void taper(const TopoDS_Shape&, Handle(Geom_Plane),double);
-
-const char *shape_types[9] = {
-        "TopAbs_COMPOUND",
-        "TopAbs_COMPSOLID",
-        "TopAbs_SOLID",
-        "TopAbs_SHELL",
-        "TopAbs_FACE",
-        "TopAbs_WIRE",
-        "TopAbs_EDGE",
-        "TopAbs_VERTEX",
-        "TopAbs_SHAPE"
-};
-
-const char *faceContinuity[7] = {
-        "GeomAbs_C0",
-        "GeomAbs_G1",
-        "GeomAbs_C1",
-        "GeomAbs_G2",
-        "GeomAbs_C2",
-        "GeomAbs_C3",
-        "GeomAbs_CN"
-};
-
-using namespace std;
-static bool cmp(pair<string, int>& a,
-         pair<string, int>& b)
-{
-    return a.second > b.second;
-}
-
-static vector<pair<string,int>> sort_map(map<string, int>& M)
-{
-    vector<pair<string, int> > A;
-    for (auto& it : M) {
-        A.push_back(it);
-    }
-    sort(A.begin(), A.end(), cmp);
-    return A;
-}
 
 /**
  * Read a step file from a path
  * @return TopoDS_Shape shape with all roots
  */
-static TopoDS_Shape ReadStep(string path) {
-    STEPControl_Reader reader;
-    IFSelect_ReturnStatus stat = reader.ReadFile(path.c_str());
-    IFSelect_PrintCount mode = IFSelect_ListByItem;
-    //reader.PrintCheckLoad(false, mode);
-
-    Standard_Integer NbRoots = reader.NbRootsForTransfer();                      //Transfer whole file
-    Standard_Integer num = reader.TransferRoots();
-    Standard_Integer NbTrans = reader.TransferRoots();
-
-    TopoDS_Shape result = reader.OneShape();
-    return result;
-}
+static TopoDS_Shape ReadStep(string path);
 
 /**
  * Export TopoDS_Shape in STEP file with filename
@@ -76,30 +49,19 @@ static TopoDS_Shape ReadStep(string path) {
  * @param filename
  * @param unit
  */
-static void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit) {
-    cout << "------------------ exporting STEP in "<< filename << "--------------------"<< endl;
-    if (shape.IsNull()) {
-        throw new invalid_argument("Can't export null shape to STEP");
-    }
-    STEPControl_Writer writer;
-    Interface_Static::SetCVal ("xstep.cascade.unit", unit.c_str());
-    Interface_Static::SetCVal ("write.step.unit", unit.c_str ());
-    Interface_Static::SetIVal ("write.step.nonmanifold", 1);
-    // "Transfer" = convert
-    IFSelect_ReturnStatus transferStatus = writer.Transfer(shape, STEPControl_AsIs);
+static void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
 
-    if (transferStatus != IFSelect_RetDone) {
-        throw std::logic_error ("Error while transferring shape to STEP");
-    }
-    // Write transferred structure to STEP file
-    IFSelect_ReturnStatus writeStatus = writer.Write(filename.c_str());
+void taper(const TopoDS_Shape&, Handle(Geom_Plane),double);
 
-    // Return previous locale
-    if (writeStatus != IFSelect_RetDone)
-    {
-        throw std::logic_error ("Error while writing transferred shape to STEP file");
-    }
-}
+static bool cmp(pair<string, int>& a, pair<string, int>& b){
+    return a.second > b.second;}
 
+static vector<pair<string,int>> sort_map(map<string, int>& M){
+    vector<pair<string, int> > A;
+    for (auto& it : M) {
+        A.push_back(it);
+    }
+    sort(A.begin(), A.end(), cmp);
+    return A;}
 
 #endif //OCC_TEST_UTILS_H
