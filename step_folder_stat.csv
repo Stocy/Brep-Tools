@@ -1,10 +1,10 @@
-FACE TYPES COUNT
-Geom_Plane,157
+FACE TYPE,COUNT
+Geom_Plane,156
 Geom_CylindricalSurface,98
 Geom_BSplineSurface,20
-Geom_ConicalSurface,10
-Geom_ToroidalSurface,5
-EDGE TYPES COUNT
-Geom_Line,842
-Geom_Circle,515
+Geom_ConicalSurface,8
+Geom_ToroidalSurface,1
+EDGE TYPE,COUNT
+Geom_Line,838
+Geom_Circle,493
 Geom_BSplineCurve,176

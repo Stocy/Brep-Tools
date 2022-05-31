@@ -147,13 +147,13 @@ void StepFolder_Stats(string folder_path) {
     string stat_file(string(SRCDIR)+"/step_folder_stat.csv");
     stats.open(stat_file);
 
-    stats << "FACE TYPES COUNT" << endl;
+    stats << "FACE TYPE,COUNT" << endl;
     vector<pair<string,int>> sortedFTC = sort_map(faceType_count);
     for (auto it = sortedFTC.begin(); it!= sortedFTC.end(); ++it){
         stats << it->first << "," << it->second << endl;
     }
 
-    stats << "EDGE TYPES COUNT" << endl;
+    stats << "EDGE TYPE,COUNT" << endl;
     vector<pair<string,int>> sortedETC = sort_map(edgeType_count);
     for (auto it = sortedETC.begin(); it!= sortedETC.end(); ++it){
         stats << it->first << "," << it->second << endl;
@@ -166,4 +166,5 @@ void StepFolder_Stats(string folder_path) {
 
 void taper(const TopoDS_Shape &shape, opencascade::handle<Geom_Plane> plane, double angle) {
     //TODO
+
 }
