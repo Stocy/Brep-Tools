@@ -7,4 +7,4 @@
 
 -configurer et compiler avec cmake.. && make
 
--éxecuter occ_test
+-exécuter occ_test
