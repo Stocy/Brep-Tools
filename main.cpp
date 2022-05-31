@@ -13,38 +13,7 @@
 #include "Utils.h"
 
 using namespace std;
-
-map<string,int> edgeType_count, faceType_count;
-TopoDS_Shape ReadStep(string);
-void ExportSTEP(const TopoDS_Shape&, const string&, const string&);
-void Stats_TopoShapes(const TopoDS_Shape &shape, bool = true);
-void StepFolder_Stats(string=string(SRCDIR)+"/step_files");
-void taper(const TopoDS_Shape&, Handle(Geom_Plane),double);
-
-const char *shape_types[9] = {
-        "TopAbs_COMPOUND",
-        "TopAbs_COMPSOLID",
-        "TopAbs_SOLID",
-        "TopAbs_SHELL",
-        "TopAbs_FACE",
-        "TopAbs_WIRE",
-        "TopAbs_EDGE",
-        "TopAbs_VERTEX",
-        "TopAbs_SHAPE"
-};
-
-const char *faceContinuity[7] = {
-        "GeomAbs_C0",
-        "GeomAbs_G1",
-        "GeomAbs_C1",
-        "GeomAbs_G2",
-        "GeomAbs_C2",
-        "GeomAbs_C3",
-        "GeomAbs_CN"
-};
-
 int main(int argc, char** argv) {
-
     //read step file
     //TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
 
@@ -121,8 +90,6 @@ void Stats_TopoShapes(const TopoDS_Shape& shape, bool verbose){
 }
 
 namespace fs = std::filesystem;
-
-
 /**
  * Compute step files stats and store them in a csv file
  * @param folder_path folder path containing step files

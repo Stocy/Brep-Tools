@@ -7,8 +7,33 @@
 #include <algorithm>
 #include <STEPControl_Writer.hxx>
 #include <STEPControl_Reader.hxx>
+using namespace std;
+map<string,int> edgeType_count, faceType_count;
+void Stats_TopoShapes(const TopoDS_Shape &shape, bool = true);
+void StepFolder_Stats(string=string(SRCDIR)+"/step_files");
+void taper(const TopoDS_Shape&, Handle(Geom_Plane),double);
 
-static int test(int);
+const char *shape_types[9] = {
+        "TopAbs_COMPOUND",
+        "TopAbs_COMPSOLID",
+        "TopAbs_SOLID",
+        "TopAbs_SHELL",
+        "TopAbs_FACE",
+        "TopAbs_WIRE",
+        "TopAbs_EDGE",
+        "TopAbs_VERTEX",
+        "TopAbs_SHAPE"
+};
+
+const char *faceContinuity[7] = {
+        "GeomAbs_C0",
+        "GeomAbs_G1",
+        "GeomAbs_C1",
+        "GeomAbs_G2",
+        "GeomAbs_C2",
+        "GeomAbs_C3",
+        "GeomAbs_CN"
+};
 
 using namespace std;
 static bool cmp(pair<string, int>& a,
