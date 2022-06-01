@@ -10,3 +10,7 @@
   (si il y a des erreurs cmake voir CmakeList ou avec Cmake-gui)
 
 - Exécuter occ_test dans build
+
+## Visualiser les informations:
+
+Executer le script python stats_analyser.py
