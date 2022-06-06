@@ -1,7 +1,7 @@
 # Brep-Tools
-## Utiliser BRep tool pour recuperer des informations sur un ensemeble de fichiers STEP :
+## Utiliser BRep tool pour récuperer des informations sur un ensemble de fichiers STEP :
 
-- Mettre dans les fichiers step dans le dossier step_files
+- Mettre dans les fichiers STEP dans le dossier step_files
 
 - Creer un dossier build, s'y rendre à l'aide d'un terminal
 
