@@ -1,5 +1,10 @@
-File/Geom_TYPE,Geom_BSplineSurface,Geom_ConicalSurface,Geom_CylindricalSurface,Geom_Plane,Geom_ToroidalSurface,Geom_BSplineCurve,Geom_Circle,Geom_Line
-F01,0,4,91,140,0,24,441,820
-F02,5,4,7,7,1,32,52,16
-F03,15,0,0,9,0,120,0,2
-TOTAL,20,8,98,156,1,176,493,838
+File/Geom_TYPE,Geom_BSplineSurface,Geom_ConicalSurface,Geom_CylindricalSurface,Geom_Plane,Geom_SphericalSurface,Geom_SurfaceOfLinearExtrusion,Geom_ToroidalSurface,Geom_BSplineCurve,Geom_Circle,Geom_Ellipse,Geom_Line
+F01,3,0,4,2,1,0,1,14,18,0,12
+F02,866,0,8,11,0,12,0,4010,132,8,52
+F03,236,0,0,2,0,0,0,1128,0,0,2
+F04,0,4,2,4,0,0,8,0,56,0,12
+F05,0,2,0,1,0,0,4,0,22,0,4
+F06,31,0,0,2,0,0,0,144,2,0,0
+F07,0,6,0,4,0,0,12,0,74,0,12
+F08,681,0,33,27,6,9,0,3393,51,0,138
+TOTAL,1817,12,47,53,7,21,25,8689,355,8,232
