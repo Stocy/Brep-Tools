@@ -41,7 +41,7 @@ void StepFolder_Stats(string=string(SRCDIR)+"/step_files");
  * Read a step file from a path
  * @return TopoDS_Shape shape with all roots
  */
-static TopoDS_Shape ReadStep(string path);
+TopoDS_Shape ReadStep(string path);
 
 /**
  * Export TopoDS_Shape in STEP file with filename
@@ -49,9 +49,12 @@ static TopoDS_Shape ReadStep(string path);
  * @param filename
  * @param unit
  */
-static void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
+void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
 
-void taper(const TopoDS_Shape&, Handle(Geom_Plane),double);
+//void taper(const TopoDS_Shape&, Handle(Geom_Plane)&,Standard_Real);
+void taper(const Handle(Geom_BSplineCurve)&, Handle(Geom_Plane)&,Standard_Real);
+void taper(gp_Pnt&,gp_Ax3&,Standard_Real);
+
 
 static bool cmp(pair<string, int>& a, pair<string, int>& b){
     return a.second > b.second;}

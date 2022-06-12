@@ -1,7 +1,14 @@
 #include <TopExp_Explorer.hxx>
 #include <BRep_Tool.hxx>
 #include <TopoDS.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <GeomAPI_IntCS.hxx>
+#include <Geom_Line.hxx>
+#include <Geom_Curve.hxx>
+#include <gp_Lin.hxx>
 #include "Utils.h"
+
+#define TOL 0.000001
 
 static const char *shape_types[] = {
         "TopAbs_COMPOUND",
@@ -26,7 +33,7 @@ static const char *faceContinuity[] = {
 
 map<string,int> edgeType_count, faceType_count;
 
-static TopoDS_Shape ReadStep(string path) {
+TopoDS_Shape ReadStep(string path) {
     STEPControl_Reader reader;
     IFSelect_ReturnStatus stat = reader.ReadFile(path.c_str());
     IFSelect_PrintCount mode = IFSelect_ListByItem;
@@ -164,7 +171,7 @@ void StepFolder_Stats(string folder_path) {
     cout << "Stats writen to :\n" << stat_file << endl;
 }
 
-static void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit) {
+void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit) {
     cout << "------------------ exporting STEP in "<< filename << "--------------------"<< endl;
     if (shape.IsNull()) {
         throw new invalid_argument("Can't export null shape to STEP");
@@ -190,7 +197,117 @@ static void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const 
 }
 
 
-void taper(const TopoDS_Shape &shape, opencascade::handle<Geom_Plane> plane, double angle) {
-    //TODO
+//void taper(const TopoDS_Shape &shape, opencascade::handle<Geom_Plane> &plane, Standard_Real angle) {}
 
+/**
+ * apply tapering to a bSpline, modify the input bSpline
+ * @param bSplineCurve
+ * @param plane
+ * @param angle_rad
+ */
+void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, opencascade::handle<Geom_Plane> &plane, Standard_Real angle_rad) {
+
+    TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(0,poles.Size()-1);
+    //TODO refactor this
+    //operation axis, direction
+    gp_Ax3 op_ax(plane->Position());
+    gp_Vec op_Zvec(op_ax.Direction().XYZ());
+    gp_Dir dir = op_ax.Direction();
+    gp_Pnt op_origin = op_ax.Location();
+
+    //displacing every control points
+    Standard_Integer count(0);
+    for (auto current_pole : poles){
+        gp_Vec vec(op_origin, current_pole);
+        cout << "////////////////////////////" <<endl;
+        cout << "pole " << current_pole.Coord().X() << " " << current_pole.Coord().Y() << " " << current_pole.Coord().Z() << endl;
+        cout << "vec_op " << vec.X() <<" "<< vec.Y() <<" "<< vec.Z() << endl;
+        cout << "vecZ_op " << op_Zvec.X() <<" "<< op_Zvec.Y() <<" "<< op_Zvec.Z() << endl;
+
+        cout << "dot_p " << vec.Dot(op_Zvec) << endl;
+        Standard_Real height = vec.Dot(op_Zvec)/(pow(op_Zvec.Magnitude(),2));
+        cout << "height " << height << endl;
+        Handle(Geom_Line) line_zop = new Geom_Line(op_origin, op_Zvec);
+        gp_Lin lin(op_origin,op_Zvec);
+        gp_Pnt new_pt(current_pole);
+
+        if(height != 0 && !lin.Contains(current_pole, 0.00001)){
+            gp_Ax3 ax_pt(op_origin, vec);
+            gp_Vec rotate_vec(vec);
+            rotate_vec.Cross(op_Zvec);
+            gp_Ax1 rotate_axis(op_origin, rotate_vec);
+            ax_pt.Rotate(rotate_axis, angle_rad);
+            Handle(Geom_Line) line = new Geom_Line(op_origin, ax_pt.Direction().XYZ());
+
+            gp_Pnt pt_newHeight(op_origin);
+            pt_newHeight.Translate(op_Zvec.Normalized()*height);
+            Handle(Geom_Plane) plane = new Geom_Plane(pt_newHeight,dir);
+            GeomAPI_IntCS intCs(line,plane);
+
+            if (intCs.IsDone() && intCs.NbPoints()>0) {
+                new_pt = intCs.Point(1);
+                cout << "new pole " << new_pt.Coord().X() <<" "<< new_pt.Coord().Y() <<" "<< new_pt.Coord().Z() << endl;
+                //
+            }
+
+        }
+        else{
+            cout << "pole not moved" << endl;
+        }
+        new_poles[count] = new_pt;
+        count++;
+    }
+
+    Geom_BSplineCurve res(*bSplineCurve);
+    for (int i = 0; i < count; ++i) {
+        cout << i << endl;
+        res.SetPole(i+1,new_poles[i]);
+    }
+    *bSplineCurve = res;
+}
+
+void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad) {
+    gp_Ax3 op_ax(ax);
+    gp_Vec op_Zvec(op_ax.Direction().XYZ());
+    gp_Dir dir = op_ax.Direction();
+    gp_Pnt op_origin = op_ax.Location();
+
+    gp_Vec vec(op_origin, pnt);
+    cout << "////////////////////////////" <<endl;
+    cout << "point " << pnt.Coord().X() << " " << pnt.Coord().Y() << " " << pnt.Coord().Z() << endl;
+    cout << "vec_op " << vec.X() <<" "<< vec.Y() <<" "<< vec.Z() << endl;
+    cout << "vecZ_op " << op_Zvec.X() <<" "<< op_Zvec.Y() <<" "<< op_Zvec.Z() << endl;
+    cout << "dot_p " << vec.Dot(op_Zvec) << endl;
+    Standard_Real height = vec.Dot(op_Zvec)/(pow(op_Zvec.Magnitude(),2));
+    cout << "height " << height << endl;
+    Handle(Geom_Line) line_zop = new Geom_Line(op_origin, op_Zvec);
+    gp_Lin lin(op_origin,op_Zvec);
+    gp_Pnt new_pt(pnt);
+
+    if(height != 0 && !lin.Contains(pnt, TOL)){
+
+        //Defining a line to rotate about operation axis
+        gp_Ax3 ax_pt(op_origin, vec);
+        gp_Vec rotate_vec(vec);
+        rotate_vec.Cross(op_Zvec);
+        gp_Ax1 rotate_axis(op_origin, rotate_vec);
+        ax_pt.Rotate(rotate_axis, angle_rad);
+        Handle(Geom_Line) line = new Geom_Line(op_origin, ax_pt.Direction().XYZ());
+
+        //Defining a plane with new point height in operation axis coordinates
+        gp_Pnt pt_newHeight(op_origin);
+        pt_newHeight.Translate(op_Zvec.Normalized()*height);
+        Handle(Geom_Plane) plane = new Geom_Plane(pt_newHeight,dir);
+
+        //Computing intersection between line and plane to find new point position
+        GeomAPI_IntCS intCs(line,plane);
+        if (intCs.IsDone() && intCs.NbPoints()>0) {
+            new_pt = intCs.Point(1);
+            cout << "new point " << new_pt.Coord().X() <<" "<< new_pt.Coord().Y() <<" "<< new_pt.Coord().Z() << endl;
+        }
+    }
+    else{
+        cout << "pole not moved" << endl;
+    }
+    pnt = new_pt;
 }
