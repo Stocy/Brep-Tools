@@ -267,47 +267,43 @@ void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, opencascade::handle<Ge
 }
 
 void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad) {
-    gp_Ax3 op_ax(ax);
-    gp_Vec op_Zvec(op_ax.Direction().XYZ());
-    gp_Dir dir = op_ax.Direction();
-    gp_Pnt op_origin = op_ax.Location();
+    gp_Vec normal_vec(ax.Direction().XYZ());
+    gp_Pnt op_origin = ax.Location();
+    gp_Vec point_vec_u(op_origin, pnt);
 
-    gp_Vec vec(op_origin, pnt);
     cout << "////////////////////////////" <<endl;
-    cout << "point " << pnt.Coord().X() << " " << pnt.Coord().Y() << " " << pnt.Coord().Z() << endl;
-    cout << "vec_op " << vec.X() <<" "<< vec.Y() <<" "<< vec.Z() << endl;
-    cout << "vecZ_op " << op_Zvec.X() <<" "<< op_Zvec.Y() <<" "<< op_Zvec.Z() << endl;
-    cout << "dot_p " << vec.Dot(op_Zvec) << endl;
-    Standard_Real height = vec.Dot(op_Zvec)/(pow(op_Zvec.Magnitude(),2));
-    cout << "height " << height << endl;
-    Handle(Geom_Line) line_zop = new Geom_Line(op_origin, op_Zvec);
-    gp_Lin lin(op_origin,op_Zvec);
+    cout << "point :" << pnt.Coord().X() << " " << pnt.Coord().Y() << " " << pnt.Coord().Z() << endl;
+    //cout << "vec_op " << point_vec_u.X() <<" "<< point_vec_u.Y() <<" "<< point_vec_u.Z() << endl;
+    //cout << "vecZ_op " << normal_vec.X() <<" "<< normal_vec.Y() <<" "<< normal_vec.Z() << endl;
+    cout << "dot_p n x u :" << point_vec_u.Dot(normal_vec) << endl;
+    Standard_Real height = point_vec_u.Dot(normal_vec) / (pow(normal_vec.Magnitude(), 2));
+    cout << "height :" << height << endl;
+
+    gp_Lin lin(op_origin, normal_vec);
     gp_Pnt new_pt(pnt);
 
     if(height != 0 && !lin.Contains(pnt, TOL)){
 
-        //Defining a line to rotate about operation axis
-        gp_Ax3 ax_pt(op_origin, vec);
-        gp_Vec rotate_vec(vec);
-        rotate_vec.Cross(op_Zvec);
+        //Defining a rotative_line to rotate about operation axis
+        gp_Ax3 ax_pt(op_origin, point_vec_u);
+        gp_Vec rotate_vec(point_vec_u);
+        rotate_vec.Cross(normal_vec);
         gp_Ax1 rotate_axis(op_origin, rotate_vec);
         ax_pt.Rotate(rotate_axis, angle_rad);
-        Handle(Geom_Line) line = new Geom_Line(op_origin, ax_pt.Direction().XYZ());
+        Handle(Geom_Line) rotative_line = new Geom_Line(op_origin, ax_pt.Direction().XYZ());
 
         //Defining a plane with new point height in operation axis coordinates
-        gp_Pnt pt_newHeight(op_origin);
-        pt_newHeight.Translate(op_Zvec.Normalized()*height);
-        Handle(Geom_Plane) plane = new Geom_Plane(pt_newHeight,dir);
+        Handle(Geom_Plane) plane = new Geom_Plane(pnt, normal_vec);
 
-        //Computing intersection between line and plane to find new point position
-        GeomAPI_IntCS intCs(line,plane);
+        //Computing intersection between rotative_line and plane to find new point position
+        GeomAPI_IntCS intCs(rotative_line, plane);
         if (intCs.IsDone() && intCs.NbPoints()>0) {
             new_pt = intCs.Point(1);
-            cout << "new point " << new_pt.Coord().X() <<" "<< new_pt.Coord().Y() <<" "<< new_pt.Coord().Z() << endl;
+            cout << "new point :" << new_pt.Coord().X() <<" "<< new_pt.Coord().Y() <<" "<< new_pt.Coord().Z() << endl;
         }
     }
     else{
-        cout << "pole not moved" << endl;
+        cout << "point not moved" << endl;
     }
     pnt = new_pt;
 }

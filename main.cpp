@@ -13,6 +13,10 @@
 #include <GeomConvert.hxx>
 #include <TopoDS_Edge.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <GeomAPI_Interpolate.hxx>
+#include <AIS_Shape.hxx>
+#include <BRepMesh_ShapeVisitor.hxx>
+#include <BRepMesh_ShapeTool.hxx>
 #include "Utils.h"
 #include "BRepBuilderAPI.hxx"
 
@@ -32,12 +36,14 @@ int main(int argc, char** argv) {
     //Loading bspline from step file
     TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/bs_curve.step");
     Stats_TopoShapes(shape);
+    TopoDS_Edge bs_edge;
     Handle(Geom_BSplineCurve) a_bs;
     cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
 
     for(TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()){
         Standard_Real first(0.0), last(1.0);
-        const opencascade::handle<Geom_Curve> &curve = BRep_Tool::Curve(TopoDS::Edge(explorer.Current()),first,last);
+        bs_edge = TopoDS::Edge(explorer.Current());
+        const opencascade::handle<Geom_Curve> &curve = BRep_Tool::Curve(bs_edge,first,last);
         if(!curve.IsNull()){
             if (curve->IsInstance(Standard_Type::Instance<Geom_BSplineCurve>())){
                 a_bs = GeomConvert::CurveToBSplineCurve(curve);
@@ -60,7 +66,23 @@ int main(int argc, char** argv) {
         //exporting result
         BRepBuilderAPI_MakeEdge apiMakeEdge(a_bs);
         ExportSTEP(apiMakeEdge.Shape(), "out.step", "mm");
+        AIS_Shape aisShape(apiMakeEdge.Shape());
+        aisShape.Attributes()->SetDiscretisation(1000);
+        aisShape.Shape();
+        //BRepMesh_ShapeVisitor bRepMeshShapeVisitor();
+        //bRepMeshShapeVisitor().Visit(bs_edge);
+        //auto a = bRepMeshShapeVisitor().This();
+        //bRepMeshShapeVisitor().
+
+        //cout << "aloo " << a->DynamicType() << endl;
     }
+    int discr = 100;
+    
+    for (int i = 0; i < discr; ++i) {
+
+    }
+    //a_bs->LocalValue();
+    //GeomAPI_Interpolate interpolate;
 
 
 }
