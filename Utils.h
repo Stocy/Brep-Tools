@@ -52,7 +52,7 @@ TopoDS_Shape ReadStep(string path);
 void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
 
 //void taper(const TopoDS_Shape&, Handle(Geom_Plane)&,Standard_Real);
-void taper(const Handle(Geom_BSplineCurve)&, Handle(Geom_Plane)&,Standard_Real);
+void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad);
 void taper(gp_Pnt&,gp_Ax3&,Standard_Real);
 
 

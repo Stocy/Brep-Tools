@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     //StepFolder_Stats();
 
     //Loading bspline from step file
-    TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/bs_curve.step");
+    TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/bs_curve_rational.step");
     Stats_TopoShapes(shape);
     TopoDS_Edge bs_edge;
     Handle(Geom_BSplineCurve) a_bs;
@@ -59,9 +59,8 @@ int main(int argc, char** argv) {
     //applying tapering
     if (!a_bs.IsNull()){
         //set parameters for operation ie working plane
-        gp_Ax3 op_axis(gp_Pnt(5,5,0),gp_Dir(0,1,0));
-        Handle(Geom_Plane) pl = new Geom_Plane(op_axis);
-        taper(a_bs, pl,numbers::pi/100);
+        gp_Ax3 op_axis(gp_Pnt(0,0,0),gp_Dir(0,1,0));
+        taper(a_bs, op_axis,-numbers::pi/10);
 
         //exporting result
         BRepBuilderAPI_MakeEdge apiMakeEdge(a_bs);
