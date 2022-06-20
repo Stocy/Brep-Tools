@@ -5,6 +5,7 @@
 #include <GeomAPI_IntCS.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Curve.hxx>
+#include <Geom_BSplineSurface.hxx>
 #include <gp_Lin.hxx>
 #include "Utils.h"
 
@@ -271,4 +272,17 @@ void taper(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &a
     }
     *bSplineCurve = res;
 
+}
+
+void taper(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad) {
+   TColgp_Array2OfPnt poles(bSplineSurface->Poles()), new_poles(1,poles.NbRows(),1,poles.NbColumns());
+
+    for (int i = 0; i < poles.NbRows(); ++i) {
+        for (int j = 0; j < poles.NbColumns(); ++j) {
+            gp_Pnt new_pole(poles[i][j]);
+            taper(new_pole,ax,angle_rad);
+            new_poles[i][j] = new_pole;
+        }
+    }
+    bSplineSurface->Poles(new_poles);
 }
