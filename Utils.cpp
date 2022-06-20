@@ -7,6 +7,9 @@
 #include <Geom_Curve.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <gp_Lin.hxx>
+#include <TopoDS_Edge.hxx>
+#include <GeomConvert.hxx>
+#include <TopoDS_Face.hxx>
 #include "Utils.h"
 
 #define TOL 0.000001
@@ -285,4 +288,58 @@ void taper(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax
         }
     }
     bSplineSurface->Poles(new_poles);
+}
+
+vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape &shape) {
+    TopoDS_Edge bs_edge;
+    Handle(Geom_BSplineCurve) a_bs;
+    vector<Handle(Geom_BSplineCurve)> res;
+    cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
+
+    for(TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()){
+        Standard_Real first(0.0), last(1.0);
+        bs_edge = TopoDS::Edge(explorer.Current());
+        const opencascade::handle<Geom_Curve> &curve = BRep_Tool::Curve(bs_edge,first,last);
+        if(!curve.IsNull()){
+            if (curve->IsInstance(Standard_Type::Instance<Geom_BSplineCurve>())){
+                a_bs = GeomConvert::CurveToBSplineCurve(curve);
+                cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
+                cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
+                for (auto pole : a_bs->Poles()){
+                    cout << "pole " << pole.Coord().X() <<" "<< pole.Coord().Y() <<" "<< pole.Coord().Z() << endl;
+                }
+                res.push_back(a_bs);
+            }
+        }
+    }
+    return res;
+}
+
+vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
+    Stats_TopoShapes(shape);
+    TopoDS_Face bs_face;
+    Handle(Geom_BSplineSurface) a_bs;
+    vector<Handle(Geom_BSplineSurface)> res;
+    cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
+
+    for(TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()){
+        Standard_Real first(0.0), last(1.0);
+        bs_face = TopoDS::Face(explorer.Current());
+        const opencascade::handle<Geom_Surface> &surface = BRep_Tool::Surface(bs_face);
+        if(!surface.IsNull()){
+            if (surface->IsInstance(Standard_Type::Instance<Geom_BSplineSurface>())){
+                a_bs = GeomConvert::SurfaceToBSplineSurface(surface);
+                cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
+                cout << "bspline with " << a_bs->Poles().Size() << " poles : " << endl;
+                for (int i = 1; i <= a_bs->Poles().NbRows(); ++i) {
+                    for (int j = 1; j <= a_bs->Poles().NbColumns(); ++j) {
+                        gp_Pnt pole = a_bs->Pole(i,j);
+                        cout << "pole " << pole.Coord().X() <<" "<< pole.Coord().Y() <<" "<< pole.Coord().Z() << endl;
+                    }
+                }
+                res.push_back(a_bs);
+            }
+        }
+    }
+    return res;
 }
