@@ -53,10 +53,12 @@ void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string&
 
 //void taper(const TopoDS_Shape&, Handle(Geom_Plane)&,Standard_Real);
 vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&);
-vector<Handle(Geom_BSplineCurve)> bSS(TopoDS_Shape&);
-void taper(const Handle(Geom_BSplineSurface) &bSplineSurface,gp_Ax3 &ax, Standard_Real angle_rad));
+
+vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&);
+void taper(const Handle(Geom_BSplineSurface) &bSplineSurface,gp_Ax3 &ax, Standard_Real angle_rad);
 void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad);
 void taper(gp_Pnt&,gp_Ax3&,Standard_Real);
+void setColor(TopoDS_Shape);
 
 
 static bool cmp(pair<string, int>& a, pair<string, int>& b){

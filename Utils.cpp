@@ -10,7 +10,9 @@
 #include <TopoDS_Edge.hxx>
 #include <GeomConvert.hxx>
 #include <TopoDS_Face.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
 #include "Utils.h"
+#include "TopoDS_Shape.hxx"
 
 #define TOL 0.000001
 
@@ -192,7 +194,6 @@ void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string&
     }
     // Write transferred structure to STEP file
     IFSelect_ReturnStatus writeStatus = writer.Write(filename.c_str());
-
     // Return previous locale
     if (writeStatus != IFSelect_RetDone)
     {
@@ -274,20 +275,17 @@ void taper(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &a
         res.SetPole(i,new_poles[i]);
     }
     *bSplineCurve = res;
-
 }
 
 void taper(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad) {
-   TColgp_Array2OfPnt poles(bSplineSurface->Poles()), new_poles(1,poles.NbRows(),1,poles.NbColumns());
-
-    for (int i = 0; i < poles.NbRows(); ++i) {
-        for (int j = 0; j < poles.NbColumns(); ++j) {
-            gp_Pnt new_pole(poles[i][j]);
+   TColgp_Array2OfPnt poles(bSplineSurface->Poles());
+    for (int i = 1; i <= poles.NbRows(); ++i) {
+        for (int j = 1; j <= poles.NbColumns(); ++j) {
+            gp_Pnt new_pole(poles(i,j));
             taper(new_pole,ax,angle_rad);
-            new_poles[i][j] = new_pole;
+            bSplineSurface->SetPole(i,j,new_pole);
         }
     }
-    bSplineSurface->Poles(new_poles);
 }
 
 vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape &shape) {
@@ -316,10 +314,10 @@ vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape &shape) {
 }
 
 vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
+    vector<Handle(Geom_BSplineSurface)> res;
     Stats_TopoShapes(shape);
     TopoDS_Face bs_face;
     Handle(Geom_BSplineSurface) a_bs;
-    vector<Handle(Geom_BSplineSurface)> res;
     cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
 
     for(TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()){
@@ -330,7 +328,7 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
             if (surface->IsInstance(Standard_Type::Instance<Geom_BSplineSurface>())){
                 a_bs = GeomConvert::SurfaceToBSplineSurface(surface);
                 cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
-                cout << "bspline with " << a_bs->Poles().Size() << " poles : " << endl;
+                cout << "bspline surface with " << a_bs->Poles().Size() << " poles : " << endl;
                 for (int i = 1; i <= a_bs->Poles().NbRows(); ++i) {
                     for (int j = 1; j <= a_bs->Poles().NbColumns(); ++j) {
                         gp_Pnt pole = a_bs->Pole(i,j);
@@ -342,4 +340,12 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
         }
     }
     return res;
+}
+
+void setColor(TopoDS_Shape shape) {
+    Handle(XCAFDoc_ShapeTool) shapeTool;
+    shapeTool->Init();
+    shapeTool->AddShape(shape);
+    // setColor(shape);
+
 }

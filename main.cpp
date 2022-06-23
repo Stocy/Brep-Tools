@@ -17,70 +17,67 @@
 #include <AIS_Shape.hxx>
 #include <BRepMesh_ShapeVisitor.hxx>
 #include <BRepMesh_ShapeTool.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <TopoDS_Face.hxx>
+#include <Geom_BSplineSurface.hxx>
 #include "Utils.h"
 #include "BRepBuilderAPI.hxx"
+//#include <occutils/ExtendedSTEP.hxx>
+//#include <occutils/Primitive.hxx>
 
 using namespace std;
 int main(int argc, char** argv) {
     //read step file
-    //TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
+    //TopoDS_Shape t_curve = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
 
     // compute stats
-    //Stats_TopoShapes(shape);
+    //Stats_TopoShapes(t_curve);
 
     // export TopoDS to step file
-    //ExportSTEP(shape, "out.step", "mm");
+    //ExportSTEP(t_curve, "out.step", "mm");
 
     //StepFolder_Stats();
 
     //Loading bspline from step file
-    TopoDS_Shape shape = ReadStep("/home/tom/Documents/stage_can/occ_test/bs_curve_rational.step");
-    Stats_TopoShapes(shape);
-    TopoDS_Edge bs_edge;
-    Handle(Geom_BSplineCurve) a_bs;
-    cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
+    TopoDS_Shape t_curve = ReadStep(string(SRCDIR)+"/bs_curve_rational.step");
+    TopoDS_Shape t_surf = ReadStep(string(SRCDIR)+"/bs_surf.step");
 
-    for(TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()){
-        Standard_Real first(0.0), last(1.0);
-        bs_edge = TopoDS::Edge(explorer.Current());
-        const opencascade::handle<Geom_Curve> &curve = BRep_Tool::Curve(bs_edge,first,last);
-        if(!curve.IsNull()){
-            if (curve->IsInstance(Standard_Type::Instance<Geom_BSplineCurve>())){
-                a_bs = GeomConvert::CurveToBSplineCurve(curve);
-                cout << "bs is " << (a_bs.IsNull()?"null":"not null") << endl;
-                cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
-                for (auto pole : a_bs->Poles()){
-                    cout << "pole " << pole.Coord().X() <<" "<< pole.Coord().Y() <<" "<< pole.Coord().Z() << endl;
-                }
-            }
-        }
-    }
+    //Stats_TopoShapes(t_curve);
+    //Stats_TopoShapes(t_surf);
+    vector<Handle(Geom_BSplineCurve)> bScs = bSC(t_curve);
+    vector<Handle(Geom_BSplineSurface)> bSss = bSS(t_surf);
+
+    Handle(Geom_BSplineCurve) a_bSC(bScs.at(0));
+    Handle(Geom_BSplineSurface) a_bSS(bSS(t_surf).at(0));
+    cout << "bs is " << (a_bSC.IsNull() ? "null" : "not null") << endl;
 
     //applying tapering
-    if (!a_bs.IsNull()){
+    if (!a_bSC.IsNull()){
+
         //set parameters for operation ie working plane
         gp_Ax3 op_axis(gp_Pnt(0,0,0),gp_Dir(0,1,0));
-        taper(a_bs, op_axis,-numbers::pi/10);
+        taper(a_bSC, op_axis, -numbers::pi / 100);
+        taper(a_bSS,op_axis,-numbers::pi / 100);
+
 
         //exporting result
-        BRepBuilderAPI_MakeEdge apiMakeEdge(a_bs);
-        ExportSTEP(apiMakeEdge.Shape(), "out.step", "mm");
-        AIS_Shape aisShape(apiMakeEdge.Shape());
-        aisShape.Attributes()->SetDiscretisation(1000);
-        aisShape.Shape();
-        //BRepMesh_ShapeVisitor bRepMeshShapeVisitor();
-        //bRepMeshShapeVisitor().Visit(bs_edge);
-        //auto a = bRepMeshShapeVisitor().This();
-        //bRepMeshShapeVisitor().
+        BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
+        BRepBuilderAPI_MakeFace apiMakeFace;
+        apiMakeFace.Init(a_bSS,true,0.00001);
+        ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
+        ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
 
-        //cout << "aloo " << a->DynamicType() << endl;
+        //STEP::ExtendedSTEPExporter stepExporter;
+        //stepExporter.AddShapeWithColor(cube, Quantity_NOC_RED);
+        //stepExporter.Write("ColoredCube.step");
+
     }
     int discr = 100;
     
-    for (int i = 0; i < discr; ++i) {
+    for (int i = 0; i <= discr; ++i) {
 
     }
-    //a_bs->LocalValue();
+    //a_bSC->LocalValue();
     //GeomAPI_Interpolate interpolate;
 
 
