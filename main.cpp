@@ -66,17 +66,14 @@ int main(int argc, char** argv) {
         apiMakeFace.Init(a_bSS,true,0.00001);
         ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
         ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
+        taper_verif(a_bSC,op_axis,numbers::pi/100, 1000);
 
         //STEP::ExtendedSTEPExporter stepExporter;
         //stepExporter.AddShapeWithColor(cube, Quantity_NOC_RED);
         //stepExporter.Write("ColoredCube.step");
 
     }
-    int discr = 100;
-    
-    for (int i = 0; i <= discr; ++i) {
 
-    }
     //a_bSC->LocalValue();
     //GeomAPI_Interpolate interpolate;
 

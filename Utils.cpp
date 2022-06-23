@@ -11,8 +11,12 @@
 #include <GeomConvert.hxx>
 #include <TopoDS_Face.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include "Utils.h"
 #include "TopoDS_Shape.hxx"
+#include "Geom_Geometry.hxx"
+#include "Geom_BoundedCurve.hxx"
+#include "Geom_Curve.hxx"
 
 #define TOL 0.000001
 
@@ -348,4 +352,28 @@ void setColor(TopoDS_Shape shape) {
     shapeTool->AddShape(shape);
     // setColor(shape);
 
+}
+
+void taper_verif(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad,
+                 Standard_Integer discr) {
+    vector<Standard_Real> dists(discr);
+    auto tmp_geom = bSplineCurve->Copy();
+    Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
+    taper(new_curve, ax, angle_rad);
+    cout << "POC" << endl;
+    if (bSplineCurve->Pole(3).IsEqual(new_curve->Pole(3),0))cout << "BIG PB"<< endl;
+    for (int i = 0; i <= discr ; ++i) {
+        gp_Pnt pnt;
+        new_curve->D0(i/(discr*1.0),pnt);
+        GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt, bSplineCurve);
+        //cout << geomApiProjectPointOnCurve.LowerDistance() << endl;
+        dists.push_back(geomApiProjectPointOnCurve.LowerDistance());
+    }
+    Standard_Real min(dists[0]), max(min), sum(0);
+    for (auto d : dists){
+        if (d > max) max = d;
+        if (d < min) min = d;
+        sum += d;
+    }
+    cout << "min : " << min << ", max : " << max << " average : " << sum/discr << endl;
 }
