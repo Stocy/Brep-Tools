@@ -59,7 +59,7 @@ void taper(const Handle(Geom_BSplineSurface) &bSplineSurface,gp_Ax3 &ax, Standar
 void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad);
 void taper(gp_Pnt&,gp_Ax3&,Standard_Real);
 void
-taper_verif(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
+taper_verif_bsc(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
 void setColor(TopoDS_Shape);
 
 
