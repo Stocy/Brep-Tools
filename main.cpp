@@ -56,8 +56,8 @@ int main(int argc, char** argv) {
 
         //set parameters for operation ie working plane
         gp_Ax3 op_axis(gp_Pnt(0,0,0),gp_Dir(0,1,0));
-        taper(a_bSC, op_axis, -numbers::pi / 100);
-        taper(a_bSS,op_axis,-numbers::pi / 100);
+        taper(a_bSC, op_axis, -numbers::pi / 100, true);
+        taper(a_bSS, op_axis, -numbers::pi / 100, true);
 
 
         //exporting result

@@ -55,9 +55,9 @@ void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string&
 vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&);
 
 vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&);
-void taper(const Handle(Geom_BSplineSurface) &bSplineSurface,gp_Ax3 &ax, Standard_Real angle_rad);
-void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad);
-void taper(gp_Pnt&,gp_Ax3&,Standard_Real);
+void taper(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
 void
 taper_verif_bsc(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
 void setColor(TopoDS_Shape);

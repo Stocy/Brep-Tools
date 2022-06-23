@@ -219,7 +219,13 @@ void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Pnt &ax, Standard_R
 
 }
 
-void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad) {
+void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose = true) {
+    // get underlying buffer
+    streambuf* orig_buf = cout.rdbuf();
+
+    // set null
+    if(!verbose)cout.rdbuf(NULL);
+
     gp_Vec normal_vec(ax.Direction().XYZ());
     gp_Pnt op_origin = ax.Location();
     gp_Vec point_vec_u(op_origin, pnt);
@@ -259,9 +265,16 @@ void taper(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad) {
         cout << "point not moved" << endl;
     }
     pnt = new_pt;
+    cout.rdbuf(orig_buf);
 }
 
-void taper(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad) {
+void taper(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose) {
+    // get underlying buffer
+    streambuf* orig_buf = cout.rdbuf();
+
+    // set null
+    if(!verbose)cout.rdbuf(NULL);
+
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1,poles.Size());
 
     //displacing every control points
@@ -279,9 +292,17 @@ void taper(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &a
         res.SetPole(i,new_poles[i]);
     }
     *bSplineCurve = res;
+
+    cout.rdbuf(orig_buf);
 }
 
-void taper(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad) {
+void taper(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose) {
+    // get underlying buffer
+    streambuf* orig_buf = cout.rdbuf();
+
+    // set null
+    if(!verbose)cout.rdbuf(NULL);
+
    TColgp_Array2OfPnt poles(bSplineSurface->Poles());
     for (int i = 1; i <= poles.NbRows(); ++i) {
         for (int j = 1; j <= poles.NbColumns(); ++j) {
@@ -290,6 +311,7 @@ void taper(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax
             bSplineSurface->SetPole(i,j,new_pole);
         }
     }
+    cout.rdbuf(orig_buf);
 }
 
 vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape &shape) {
@@ -360,7 +382,7 @@ void taper_verif_bsc(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, 
     vector<Standard_Real> dists(discr);
     auto tmp_geom = bSplineCurve->Copy();
     Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    taper(new_curve, ax, angle_rad);
+    taper(new_curve, ax, angle_rad, true);
     //if (bSplineCurve->Pole(3).IsEqual(new_curve->Pole(3),0))cout << "BIG PB"<< endl;
     for (int i = 0; i <= discr ; ++i) {
         gp_Pnt pnt, new_pnt;
