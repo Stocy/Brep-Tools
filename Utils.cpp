@@ -12,6 +12,12 @@
 #include <TopoDS_Face.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <BRepBuilderAPI.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRep_Builder.hxx>
+#include "BRepBuilderAPI_MakeVertex.hxx"
+#include "TopoDS_Builder.hxx"
 #include "Utils.h"
 #include "TopoDS_Shape.hxx"
 #include "Geom_Geometry.hxx"
@@ -379,19 +385,23 @@ void setColor(TopoDS_Shape shape) {
 void taper_verif_bsc(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad,
                      Standard_Integer discr) {
     cout << "BSC TAPER verification" << endl;
-    vector<Standard_Real> dists(discr);
+    vector<Standard_Real> dists(discr + 1);
+    vector<gp_Pnt> discr_pnts(discr + 1);
     auto tmp_geom = bSplineCurve->Copy();
     Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    taper(new_curve, ax, angle_rad, true);
+    taper(new_curve, ax, angle_rad, false);
     //if (bSplineCurve->Pole(3).IsEqual(new_curve->Pole(3),0))cout << "BIG PB"<< endl;
     for (int i = 0; i <= discr ; ++i) {
+        Standard_Real U = (Standard_Real)i/discr;
+        cout << U << endl;
         gp_Pnt pnt, new_pnt;
-        bSplineCurve->D0(i/(discr*1.0),pnt);
-        taper(pnt,ax,angle_rad);
+        pnt = bSplineCurve->Value(U);
+        taper(pnt,ax,angle_rad, false);
         GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt, bSplineCurve);
         new_pnt = geomApiProjectPointOnCurve.Point(1);
+        discr_pnts[i] = new_pnt;
         //cout << geomApiProjectPointOnCurve.LowerDistance() << endl;
-        dists.push_back(geomApiProjectPointOnCurve.LowerDistance());
+        dists[i] = geomApiProjectPointOnCurve.LowerDistance();
         cout << "tapered point : " << pnt.X() <<", "<< pnt.Y() <<", "<< pnt.Z() << endl;
         cout << "dst to tapered bSpline : " << geomApiProjectPointOnCurve.LowerDistance() << endl;
     }
@@ -401,5 +411,26 @@ void taper_verif_bsc(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, 
         if (d < min) min = d;
         sum += d;
     }
+
+
+    for (int i = 1; i <= bSplineCurve->NbKnots(); ++i) {
+        Standard_Real U = bSplineCurve->Knot(i);
+        cout << U << endl;
+    }
+    cout << bSplineCurve->FirstParameter() << endl;
+    cout << bSplineCurve->LastParameter() << endl;
+
+    BRepBuilderAPI_MakeWire makeWire;
+    TopoDS_Compound pts;
+    BRep_Builder builder;
+    builder.MakeCompound (pts);
+    for (int i = 0; i < discr; ++i){
+        BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
+        builder.Add(pts,vertex.Vertex());
+        BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i+1]);
+        makeWire.Add(makeEdge.Edge());
+    }
+    ExportSTEP(makeWire.Shape(),"discr_bsc.step","mm");
+    ExportSTEP(pts,"discr_bsc_pts.step","mm");
     cout << "min : " << min << ", max : " << max << " average : " << sum/discr << endl;
 }
