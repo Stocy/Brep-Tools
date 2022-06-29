@@ -55,18 +55,19 @@ int main(int argc, char** argv) {
     if (!a_bSC.IsNull()){
 
         //set parameters for operation ie working plane
-        gp_Ax3 op_axis(gp_Pnt(0,0,0),gp_Dir(0,1,0));
-        taper(a_bSC, op_axis, -numbers::pi / 100, true);
-        taper(a_bSS, op_axis, -numbers::pi / 100, true);
+        gp_Ax3 op_axis(gp_Pnt(-5,-5,0),gp_Dir(0,1,0));
+        //TaperPnt(a_bSC, op_axis, -numbers::pi / 100, true);
+        //TaperPnt(a_bSS, op_axis, -numbers::pi / 100, true);
 
 
         //exporting result
-        BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
-        BRepBuilderAPI_MakeFace apiMakeFace;
-        apiMakeFace.Init(a_bSS,true,0.00001);
-        ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
-        ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
-        taper_verif_bsc(a_bSC, op_axis, numbers::pi / 100, 1000);
+        //BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
+        //BRepBuilderAPI_MakeFace apiMakeFace;
+        //apiMakeFace.Init(a_bSS,true,0.00001);
+        //ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
+        //ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
+        TaperBSC_eval(a_bSC, op_axis, numbers::pi / 100, 200);
+        a_bSC->MovePoint()
 
         //STEP::ExtendedSTEPExporter stepExporter;
         //stepExporter.AddShapeWithColor(cube, Quantity_NOC_RED);
