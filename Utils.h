@@ -51,12 +51,18 @@ TopoDS_Shape ReadStep(string path);
  */
 void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
 
+struct taperParam {
+    gp_Ax3 ax;
+};
+
 void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor, bool verbose);
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool verbose);
+void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor, bool verbose);
 
 void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
 void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);
 void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), Standard_Integer discr);
 
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);

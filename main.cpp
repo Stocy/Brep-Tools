@@ -20,8 +20,13 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <TopoDS_Face.hxx>
 #include <Geom_BSplineSurface.hxx>
+#include <TopoDS_Compound.hxx>
+#include <TopoDS_Builder.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
 #include "Utils.h"
 #include "BRepBuilderAPI.hxx"
+#include "TopoDS_Vertex.hxx"
 //#include <occutils/ExtendedSTEP.hxx>
 //#include <occutils/Primitive.hxx>
 
@@ -55,9 +60,26 @@ int main(int argc, char** argv) {
     if (!a_bSC.IsNull()){
 
         //set parameters for operation ie working plane
-        gp_Ax3 op_axis(gp_Pnt(-5,-5,0),gp_Dir(0,1,0));
+        gp_Ax3 op_axis(gp_Pnt(-1,0,0),gp_Dir(0,1,0));
         //TaperPnt(a_bSC, op_axis, -numbers::pi / 100, true);
         //TaperPnt(a_bSS, op_axis, -numbers::pi / 100, true);
+
+
+        /*
+        TopoDS_Compound pts;
+        BRep_Builder builder;
+        builder.MakeCompound(pts);
+        for (gp_Pnt &pole : a_bSC->Poles()){
+            TaperPnt(pole,op_axis, [](auto r){return 0.05*r;},1,true);
+            BRepBuilderAPI_MakeVertex vertexBuilder = BRepBuilderAPI_MakeVertex(pole);
+            TopoDS_Shape vertex = vertexBuilder.Vertex();
+            builder.Add(pts, vertex);
+        }
+
+        ExportSTEP(pts,"pnts_bsc.step","mm");
+         */
+
+
 
 
         //exporting result
@@ -66,8 +88,9 @@ int main(int argc, char** argv) {
         //apiMakeFace.Init(a_bSS,true,0.00001);
         //ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
         //ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
-        TaperBSC_eval(a_bSC, op_axis, numbers::pi / 100, 200);
-        a_bSC->MovePoint()
+        auto func =  [](auto h){return -h*0.1;};
+        TaperBSC_eval(a_bSC, op_axis, func, 200);
+        //a_bSC->MovePoint()
 
         //STEP::ExtendedSTEPExporter stepExporter;
         //stepExporter.AddShapeWithColor(cube, Quantity_NOC_RED);

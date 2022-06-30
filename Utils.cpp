@@ -17,6 +17,8 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRep_Builder.hxx>
 #include <ShapeAnalysis_Curve.hxx>
+#include <gp_Sphere.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
 #include "BRepBuilderAPI_MakeVertex.hxx"
 #include "TopoDS_Builder.hxx"
 #include "Utils.h"
@@ -274,20 +276,28 @@ void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose = t
     cout.rdbuf(orig_buf);
 }
 
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor, bool verbose) {
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool verbose) {
+    // get underlying buffer
+    streambuf* orig_buf = cout.rdbuf();
+    // set null
+    if(!verbose)cout.rdbuf(NULL);
 
     gp_Vec normalVec(ax.Direction().XYZ());
     gp_Pnt opOrigin = ax.Location();
     gp_Vec pntVec(opOrigin, pnt);
 
+    //TODO traiter le cas ou pntVec et normalVec sont colineaire
     gp_Vec vecHeight = (pntVec.Dot(normalVec) / normalVec.Dot(normalVec))*normalVec;
-    Standard_Real height(vecHeight.Magnitude()), factor(taperFunc(height) * tFuncFacor);
+    Standard_Real height(vecHeight.Magnitude()), factor(taperFunc(height));
+    cout << "height : " << height << endl;
+    cout << "factor : " << factor << endl;
 
     gp_Pnt heightPnt(opOrigin.Translated(vecHeight));
     gp_Vec displacementVec(heightPnt,pnt);
 
-    displacementVec = displacementVec*factor;
-    gp_Pnt newPnt(heightPnt.Translated(displacementVec));
+
+    displacementVec.Scale(factor/displacementVec.Magnitude());
+    gp_Pnt newPnt(pnt.Translated(displacementVec));
 
     pnt = newPnt;
 }
@@ -320,6 +330,39 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standar
     cout.rdbuf(orig_buf);
 }
 
+void
+TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, Standard_Real (*func)(Standard_Real),
+         bool verbose) {
+
+    // get underlying buffer
+    streambuf* orig_buf = cout.rdbuf();
+
+    // set null
+    if(!verbose)cout.rdbuf(NULL);
+
+    TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1,poles.Size());
+
+    //displacing every control points
+    Standard_Integer count(1);
+    for (auto current_pole : poles){
+        gp_Pnt new_pole(current_pole);
+        TaperPnt(new_pole, ax, func, false);
+        new_poles[count] = new_pole;
+        count++;
+    }
+    count--;
+
+    Geom_BSplineCurve res(*bSplineCurve);
+    for (int i = 1; i <= count; ++i) {
+        res.SetPole(i,new_poles[i]);
+    }
+    *bSplineCurve = res;
+
+    cout.rdbuf(orig_buf);
+
+
+}
+
 void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad,
                    Standard_Integer discr) {
     cout << "BSC TAPER verification" << endl;
@@ -341,6 +384,74 @@ void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, St
         cout << U << endl;
         gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
         TaperPnt(pnt, ax, angle_rad, false);
+        discr_pnts[i] = pnt;
+        //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,new_curve);
+        //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
+        ShapeAnalysis_Curve shapeAnalysisCurve;
+        Standard_Real dst = 0.0, param(0.0);
+
+        shapeAnalysisCurve.Project(new_curve,pnt,0,pnt_on_curve,param);
+        BRepBuilderAPI_MakeEdge makeEdge(pnt,pnt_on_curve);
+        //if (!pnt.IsEqual(pnt_on_curve,0)) builder.Add(compound, makeEdge.Shape());
+        dst = pnt_on_curve.Distance(pnt);
+        dists[i] = dst;
+        cout << "dst to tapered bSpline : " << dst << endl;
+
+    }
+    Standard_Real min(dists[0]), max(min), sum(0);
+    for (auto d : dists){
+        if (d > max) max = d;
+        if (d < min) min = d;
+        sum += d;
+    }
+
+
+    for (int i = 1; i <= bSplineCurve->NbKnots(); ++i) {
+        Standard_Real U = bSplineCurve->Knot(i);
+        cout << U << endl;
+    }
+    cout << bSplineCurve->FirstParameter() << endl;
+    cout << bSplineCurve->LastParameter() << endl;
+
+    BRepBuilderAPI_MakeWire makeWire;
+
+    for (int i = 0; i < discr; ++i){
+        BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
+        builder.Add(compound, vertex.Vertex());
+        BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i+1]);
+        makeWire.Add(makeEdge.Edge());
+    }
+
+    ExportSTEP(compound, "bsc_verif.step", "mm");
+    cout << "min : " << min << ", max : " << max << " average : " << sum/discr << endl;
+}
+
+void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
+                   Standard_Real (*func)(Standard_Real), Standard_Integer discr) {
+
+    cout << "BSC TAPER verification" << endl;
+    vector<Standard_Real> dists(discr + 1);
+    vector<gp_Pnt> discr_pnts(discr + 1);
+
+    TopoDS_Compound compound;
+    BRep_Builder builder;
+    builder.MakeCompound(compound);
+
+    Handle(Geom_Geometry) tmp_geom = bSplineCurve->Copy();
+    Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
+    TaperBSC(new_curve, ax, func, false);
+    for(auto p:new_curve->Poles()){
+        BRepPrimAPI_MakeSphere makeSphere(p,0.5);
+        builder.Add(compound, makeSphere.Shape());
+    }
+    BRepBuilderAPI_MakeEdge apiMakeEdge(new_curve);
+    builder.Add(compound, apiMakeEdge.Shape());
+
+    for (int i = 0; i <= discr ; ++i) {
+        Standard_Real U = (Standard_Real)i/discr;
+        cout << U << endl;
+        gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
+        TaperPnt(pnt, ax, func, false);
         discr_pnts[i] = pnt;
         //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,new_curve);
         //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
@@ -466,4 +577,10 @@ vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape &shape) {
         }
     }
     return res;
+}
+
+void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor,
+                   bool verbose) {
+
+
 }
