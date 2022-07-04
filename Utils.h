@@ -51,28 +51,107 @@ TopoDS_Shape ReadStep(string path);
  */
 void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
 
+/**
+ * Get BSpline Curves in a TopoDS_Shape
+ * @return vector of BSpline Curves
+ */
+vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&);
+
+/**
+ * Get BSpline Surfaces in a TopoDS_Shape
+ * @return vector of BSpline Surfaces
+ */
+vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&);
+
 struct taperParam {
     gp_Ax3 ax;
 };
 
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+/**
+ * Taper a point, according to a single argument function.
+ * the argument given to the function is the height of the point in ax coordinate system
+ * @param pnt
+ * @param ax
+ * @param taperFunc
+ * @param verbose
+ */
 void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool verbose);
+/**
+ * Test the taperPnt function
+ * @param pnt
+ * @param ax
+ * @param taperFunc
+ * @param tFuncFacor
+ * @param verbose
+ */
 void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor, bool verbose);
 
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+/**
+ * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPnt using func
+ * @param bSplineCurve
+ * @param ax
+ * @param func
+ * @param verbose
+ */
 void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
+/**
+ * Evaluate a Taper on BSpline Curve against the tapered discretization
+ * @param bSplineCurve
+ * @param ax
+ * @param func
+ * @param discr
+ */
 void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), Standard_Integer discr);
-
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+/**
+ * Taper a BSpline Surface (BSS)
+ * @param bSplineSurface
+ * @param ax
+ * @param func
+ * @param verbose
+ */
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);
-void setColor(TopoDS_Shape);
 
-vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&);
-vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&);
+/**
+ * DEPRECATED
+ * Taper a point pnt with an angle, the CAD way,
+ * should be refactored as function of taper taking point's x,y,z as argument
+ * @param pnt
+ * @param ax
+ * @param angleRad
+ * @param verbose
+ */
+void TaperPnt_CADStyle(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angleRad, bool verbose);
+
+/**
+ * DEPRECATED
+ * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPnt_CADStyle
+ * @param bSplineCurve
+ * @param ax
+ * @param angle_rad
+ * @param verbose
+ */
+void TaperBSC_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
+
+/**
+ * Evaluate a Taper on BSpline Curve against the tapered discretization
+ * @param bSplineCurve
+ * @param ax
+ * @param angle_rad
+ * @param discr
+ */
+void TaperBSC_eval_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
+/**
+ * Taper a BSpline Surface (BSS)
+ * @param bSplineSurface
+ * @param ax
+ * @param angle_rad
+ * @param verbose
+ */
+void TaperBSS_CADStyle(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
 
 static bool cmp(pair<string, int>& a, pair<string, int>& b){
     return a.second > b.second;}
+
 static vector<pair<string,int>> sort_map(map<string, int>& M){
     vector<pair<string, int> > A;
     for (auto& it : M) {
@@ -80,5 +159,6 @@ static vector<pair<string,int>> sort_map(map<string, int>& M){
     }
     sort(A.begin(), A.end(), cmp);
     return A;}
+void setColor(TopoDS_Shape);
 
 #endif //OCC_TEST_UTILS_H
