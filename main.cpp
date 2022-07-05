@@ -50,18 +50,19 @@ int main(int argc, char **argv) {
 
     //Stats_TopoShapes(t_curve);
     //Stats_TopoShapes(t_surf);
-    vector<Handle(Geom_BSplineCurve) > bScs = bSC(t_curve);
-    vector<Handle(Geom_BSplineSurface) > bSss = bSS(t_surf);
+    vector<Handle(Geom_BSplineCurve) > bScs = bSC(t_curve, false);
+    vector<Handle(Geom_BSplineSurface) > bSss = bSS(t_surf, false);
 
     Handle(Geom_BSplineCurve) a_bSC(bScs.at(0));
     Handle(Geom_BSplineSurface) a_bSS(bSS(t_surf).at(0));
+
     cout << "bs is " << (a_bSC.IsNull() ? "null" : "not null") << endl;
 
     //applying tapering
     if (!a_bSC.IsNull()) {
 
         //set parameters for operation ie working plane
-        gp_Ax3 op_axis(gp_Pnt(-1, 0, 0), gp_Dir(0, 1, 0));
+        gp_Ax3 op_axis(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0));
         //TaperPnt_CADStyle(a_bSC, op_axis, -numbers::pi / 100, true);
         //TaperPnt_CADStyle(a_bSS, op_axis, -numbers::pi / 100, true);
 
@@ -94,9 +95,11 @@ int main(int argc, char **argv) {
             //TODO line with the angle with function that create a function
             //gp_Vec o, p(cos(angle), sin(angle));
         };
-        auto func = [](auto h) { return -h * 0.1; };
+        auto func = [](auto h) { return -h * 0.07; };
+        auto func_2 = [](auto h) { return -h/300; };
         auto func_exp = [](auto h) { return -h * h * 0.1; };
-        TaperBSC_eval(a_bSC, op_axis, func_exp, 200);
+        TaperBSC_eval(a_bSC, op_axis, func_2, 200);
+        cout << "heheeeee" << endl;
         //a_bSC->MovePoint()
 
         //STEP::ExtendedSTEPExporter stepExporter;

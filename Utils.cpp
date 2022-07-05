@@ -213,11 +213,11 @@ void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string 
     }
 }
 
-vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape) {
+vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
     TopoDS_Edge bs_edge;
     Handle(Geom_BSplineCurve) a_bs;
     vector<Handle(Geom_BSplineCurve) > res;
-    cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+    if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
 
     for (TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()) {
         Standard_Real first(0.0), last(1.0);
@@ -226,24 +226,26 @@ vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape) {
         if (!curve.IsNull()) {
             if (curve->IsInstance(Standard_Type::Instance<Geom_BSplineCurve>())) {
                 a_bs = GeomConvert::CurveToBSplineCurve(curve);
-                cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
-                cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
+                if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+                if(verbose) cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
                 for (auto pole: a_bs->Poles()) {
-                    cout << "pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z() << endl;
+                    if(verbose) cout << "BSC pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z() << endl;
                 }
                 res.push_back(a_bs);
             }
         }
     }
+
     return res;
 }
 
-vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
+vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
+
     vector<Handle(Geom_BSplineSurface) > res;
     Stats_TopoShapes(shape);
     TopoDS_Face bs_face;
     Handle(Geom_BSplineSurface) a_bs;
-    cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+    if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
 
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
         Standard_Real first(0.0), last(1.0);
@@ -252,12 +254,12 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
         if (!surface.IsNull()) {
             if (surface->IsInstance(Standard_Type::Instance<Geom_BSplineSurface>())) {
                 a_bs = GeomConvert::SurfaceToBSplineSurface(surface);
-                cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
-                cout << "bspline surface with " << a_bs->Poles().Size() << " poles : " << endl;
+                if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+                if(verbose) cout << "bspline surface with " << a_bs->Poles().Size() << " poles : " << endl;
                 for (int i = 1; i <= a_bs->Poles().NbRows(); ++i) {
                     for (int j = 1; j <= a_bs->Poles().NbColumns(); ++j) {
                         gp_Pnt pole = a_bs->Pole(i, j);
-                        cout << "pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z()
+                        if(verbose) cout << "BSS pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z()
                              << endl;
                     }
                 }
@@ -268,27 +270,23 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape) {
     return res;
 }
 
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool verbose) {
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool uniform, bool verbose) {
     gp_Vec normalVec(ax.Direction().XYZ());
     gp_Pnt opOrigin = ax.Location();
     gp_Vec pntVec(opOrigin, pnt);
 
-    //TODO traiter le cas ou pntVec et normalVec sont colineaire
+    //TODO traiter le cas ou pntVec et normalVec sont colineaire : idée ne pa bouger le point
     gp_Vec vecHeight = (pntVec.Dot(normalVec) / normalVec.Dot(normalVec)) * normalVec;
     Standard_Real height(vecHeight.Magnitude()), factor(taperFunc(height));
-    cout << "height : " << height << endl;
-    cout << "factor : " << factor << endl;
+    if(verbose) cout << "height : " << height << endl;
+    if(verbose) cout << "factor : " << factor << endl;
 
     gp_Pnt heightPnt(opOrigin.Translated(vecHeight));
     gp_Vec displacementVec(heightPnt, pnt);
 
 
-    displacementVec.Scale(factor / displacementVec.Magnitude());
+    if(uniform)displacementVec.Scale(factor/displacementVec.Magnitude());
+    else displacementVec.Scale(factor);
     gp_Pnt newPnt(pnt.Translated(displacementVec));
 
     pnt = newPnt;
@@ -303,20 +301,15 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_
 void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, Standard_Real (*func)(Standard_Real),
          bool verbose) {
 
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
 
     //displacing every control points
     Standard_Integer count(1);
     for (auto current_pole: poles) {
         gp_Pnt new_pole(current_pole);
-        TaperPnt(new_pole, ax, func, false);
+        TaperPnt(new_pole, ax, func, true, false);
         new_poles[count] = new_pole;
+
         count++;
     }
     count--;
@@ -326,8 +319,6 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
         res.SetPole(i, new_poles[i]);
     }
     *bSplineCurve = res;
-
-    cout.rdbuf(orig_buf);
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
@@ -364,7 +355,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
         Standard_Real U = (Standard_Real) i / discr;
         cout << U << endl;
         gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
-        TaperPnt(pnt, ax, func, false);
+        TaperPnt(pnt, ax, func, true, false);
         discr_pnts[i] = pnt;
         //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,new_curve);
         //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();

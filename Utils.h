@@ -55,13 +55,13 @@ void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string&
  * Get BSpline Curves in a TopoDS_Shape
  * @return vector of BSpline Curves
  */
-vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&);
+vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&,bool verbose = true);
 
 /**
  * Get BSpline Surfaces in a TopoDS_Shape
  * @return vector of BSpline Surfaces
  */
-vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&);
+vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,bool verbose = true);
 
 struct taperParam {
     gp_Ax3 ax;
@@ -70,12 +70,13 @@ struct taperParam {
 /**
  * Taper a point, according to a single argument function.
  * the argument given to the function is the height of the point in ax coordinate system
+ * if uniform is set to true, every point at the same height will displaced the same amount
  * @param pnt
  * @param ax
  * @param taperFunc
  * @param verbose
  */
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool verbose);
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool uniform = false, bool verbose = true);
 /**
  * Test the taperPnt function
  * @param pnt
