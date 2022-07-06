@@ -22,6 +22,7 @@
 #include <map>
 #include <filesystem>
 #include <Interface_Static.hxx>
+#include <functional>
 
 using namespace std;
 
@@ -76,7 +77,7 @@ struct taperParam {
  * @param taperFunc
  * @param verbose
  */
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool uniform = false, bool verbose = true);
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool uniform = false, bool verbose = true);
 /**
  * Test the taperPnt function
  * @param pnt
@@ -85,7 +86,7 @@ void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real)
  * @param tFuncFacor
  * @param verbose
  */
-void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor, bool verbose);
+void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor, bool verbose);
 
 /**
  * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPnt using func
@@ -94,7 +95,7 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_
  * @param func
  * @param verbose
  */
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool verbose);
 /**
  * Evaluate a Taper on BSpline Curve against the tapered discretization
  * @param bSplineCurve
@@ -102,7 +103,7 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standar
  * @param func
  * @param discr
  */
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), Standard_Integer discr);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, Standard_Integer discr);
 /**
  * Taper a BSpline Surface (BSS)
  * @param bSplineSurface
@@ -110,7 +111,7 @@ void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, St
  * @param func
  * @param verbose
  */
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real(*func)(Standard_Real), bool verbose);
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool verbose);
 
 /**
  * DEPRECATED

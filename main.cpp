@@ -24,6 +24,7 @@
 #include <TopoDS_Builder.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
+#include <functional>
 #include "Utils.h"
 #include "BRepBuilderAPI.hxx"
 #include "TopoDS_Vertex.hxx"
@@ -97,8 +98,15 @@ int main(int argc, char **argv) {
         };
         auto func = [](auto h) { return -h * 0.07; };
         auto func_2 = [](auto h) { return -h/300; };
+        auto func_3 = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
+            Standard_Real factor = ((distance + displacement)/distance)/height;
+            function<double(double)> afunc = [factor](Standard_Real h){ return h * factor; };
+            afunc(0.1);
+            return afunc;
+        };
         auto func_exp = [](auto h) { return -h * h * 0.1; };
-        TaperBSC_eval(a_bSC, op_axis, func_2, 200);
+        function<double(double)> func_test = func_3(20.0,20.0,2.0);
+        TaperBSC_eval(a_bSC, op_axis, func_test, 200);
         cout << "heheeeee" << endl;
         //a_bSC->MovePoint()
 

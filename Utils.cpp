@@ -270,7 +270,7 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
     return res;
 }
 
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), bool uniform, bool verbose) {
+void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool uniform, bool verbose) {
     gp_Vec normalVec(ax.Direction().XYZ());
     gp_Pnt opOrigin = ax.Location();
     gp_Vec pntVec(opOrigin, pnt);
@@ -292,13 +292,13 @@ void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real)
     pnt = newPnt;
 }
 
-void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real (*taperFunc)(Standard_Real), Standard_Real tFuncFacor,
+void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor,
                    bool verbose) {
 
 
 }
 
-void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, Standard_Real (*func)(Standard_Real),
+void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func,
          bool verbose) {
 
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
@@ -322,7 +322,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
-                   Standard_Real (*func)(Standard_Real), Standard_Integer discr) {
+                   function<Standard_Real(Standard_Real)> func, Standard_Integer discr) {
 
     cout << "BSC TAPER verification" << endl;
     vector<Standard_Real> dists(discr + 1);
@@ -399,7 +399,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 }
 
 void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
-              Standard_Real (*func)(Standard_Real),
+              function<Standard_Real(Standard_Real)> func,
               bool verbose) {
 
 }
