@@ -1,5 +1,13 @@
-# Brep-Tools
-## Utiliser BRep tool pour récuperer des informations sur un ensemble de fichiers STEP :
+# Brep-Tools 
+## Un emsemble d'outils pour comprendre et manipuler des fichiers STEP
+
+## Effectuer un taper sur un fichier STEP
+
+#### En cours d'implementation, voir les fonctions de types taper* dans Utils.cpp pour faire des essais, 
+#### Utiliser CAD_ASSISTANT de OpenCascade pour visualiser les fichier step
+## Récuperer des informations sur un ensemble de fichiers STEP :
+
+- ### modifier main.cpp pour appeler StepFolder_Stats() seulement (disponible dans exemples...)
 
 - Mettre dans les fichiers STEP dans le dossier step_files
 
@@ -11,6 +19,6 @@
 
 - Exécuter occ_test dans build
 
-## Visualiser les informations:
+### Visualiser les informations:
 
-Executer le script python stats_analyser.py
+- #### Executer le script python stats_analyser.py (python 3)

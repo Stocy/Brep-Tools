@@ -27,7 +27,7 @@
 #include "Geom_BoundedCurve.hxx"
 #include "Geom_Curve.hxx"
 
-#define TOL 0.000001
+#define TOL 0.0001
 
 namespace fs = std::filesystem;
 static const char *shape_types[] = {
@@ -283,7 +283,7 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
 
     gp_Pnt newPoint;
     gp_Vec displacementVec(heightPnt, point);
-    if(displacementVec.Magnitude() > 0){
+    if(abs(displacementVec.Magnitude()) > TOL && abs(height) > TOL){
         if(sheer){
             displacementVec.Scale(factor / displacementVec.Magnitude());
             newPoint = point.Translated(displacementVec);
@@ -327,7 +327,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
-                   function<Standard_Real(Standard_Real)> func, Standard_Integer discr) {
+                   function<Standard_Real(Standard_Real)> taperFunc, Standard_Integer discr) {
 
     cout << "BSC TAPER verification" << endl;
     vector<Standard_Real> dists(discr + 1);
@@ -337,6 +337,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
     BRep_Builder builder;
     builder.MakeCompound(compound);
 
+    //adding operation axes adges, for better visualisation
     BRepBuilderAPI_MakeEdge *originAxes[3] = {
             new BRepBuilderAPI_MakeEdge(ax.Location(), ax.Location().Translated(ax.XDirection())),
             new BRepBuilderAPI_MakeEdge(ax.Location(), ax.Location().Translated(ax.YDirection())),
@@ -347,27 +348,34 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
     }
 
     Handle(Geom_Geometry) tmp_geom = bSplineCurve->Copy();
-    Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    TaperBSC(new_curve, ax, func, false);
-    for (auto p: new_curve->Poles()) {
+    Handle(Geom_BSplineCurve) newCurve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
+    TaperBSC(newCurve, ax, taperFunc, true);
+
+    double sphereRadius(0.5);
+    for (auto p: bSplineCurve->Poles()) {
+        BRepPrimAPI_MakeSphere makeSphere(p, 0.5/2);
+        builder.Add(compound, makeSphere.Shape());
+    }
+    for (auto p: newCurve->Poles()) {
         BRepPrimAPI_MakeSphere makeSphere(p, 0.5);
         builder.Add(compound, makeSphere.Shape());
     }
-    BRepBuilderAPI_MakeEdge apiMakeEdge(new_curve);
+
+    BRepBuilderAPI_MakeEdge apiMakeEdge(newCurve);
     builder.Add(compound, apiMakeEdge.Shape());
 
     for (int i = 0; i <= discr; ++i) {
         Standard_Real U = (Standard_Real) i / discr;
         cout << U << endl;
         gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
-        TaperPoint(pnt, ax, func, true, false);
+        TaperPoint(pnt, ax, taperFunc, true, false);
         discr_pnts[i] = pnt;
-        //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,new_curve);
+        //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,newCurve);
         //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
         ShapeAnalysis_Curve shapeAnalysisCurve;
         Standard_Real dst = 0.0, param(0.0);
 
-        shapeAnalysisCurve.Project(new_curve, pnt, 0, pnt_on_curve, param);
+        shapeAnalysisCurve.Project(newCurve, pnt, 0, pnt_on_curve, param);
         BRepBuilderAPI_MakeEdge makeEdge(pnt, pnt_on_curve);
         //if (!pnt.IsEqual(pnt_on_curve,0)) builder.Add(compound, makeEdge.Shape());
         dst = pnt_on_curve.Distance(pnt);
@@ -382,7 +390,6 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
         sum += d;
     }
 
-
     for (int i = 1; i <= bSplineCurve->NbKnots(); ++i) {
         Standard_Real U = bSplineCurve->Knot(i);
         cout << U << endl;
@@ -391,7 +398,6 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
     cout << bSplineCurve->LastParameter() << endl;
 
     BRepBuilderAPI_MakeWire makeWire;
-
     for (int i = 0; i < discr; ++i) {
         BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
         builder.Add(compound, vertex.Vertex());

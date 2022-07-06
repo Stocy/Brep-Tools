@@ -101,13 +101,14 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real
  */
 void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool sheer = false, bool verbose = false);
 /**
- * Evaluate a Taper on BSpline Curve against the tapered discretization
+ * Evaluate a Taper on BSpline Curve against the tapered discretization,
+ * export a step file to visualize
  * @param bSplineCurve
  * @param ax
- * @param func
+ * @param taperFunc
  * @param discr
  */
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, Standard_Integer discr);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Integer discr);
 /**
  * Taper a BSpline Surface (BSS)
  * @param bSplineSurface

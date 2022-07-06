@@ -100,7 +100,6 @@ int main(int argc, char **argv) {
     //ExportSTEP(t_curve, "out.step", "mm");
 
 
-    /////////////////////////////////////////////////////////////////////////
     //-------------------------BASICALLY TRASH----------------------------//
 
     //TaperPnt_CADStyle(a_bSC, op_axis, -numbers::pi / 100, true);
