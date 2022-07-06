@@ -275,28 +275,26 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
     gp_Pnt opOrigin = ax.Location();
     gp_Vec pntVec(opOrigin, point);
 
-    //TODO traiter le cas ou pntVec et normalVec sont colineaire : idée ne pa bouger le point
     gp_Vec vecHeight = (pntVec.Dot(normalVec) / normalVec.Dot(normalVec)) * normalVec;
     Standard_Real height(vecHeight.Magnitude()), factor(taperFunc(height));
     if(verbose) cout << "height : " << height << endl;
     if(verbose) cout << "factor : " << factor << endl;
     gp_Pnt heightPnt(opOrigin.Translated(vecHeight));
 
-
-    gp_Pnt newPnt;
+    gp_Pnt newPoint;
     gp_Vec displacementVec(heightPnt, point);
     if(displacementVec.Magnitude() > 0){
         if(sheer){
             displacementVec.Scale(factor / displacementVec.Magnitude());
-            newPnt = point.Translated(displacementVec);
+            newPoint = point.Translated(displacementVec);
         }
         else {
             displacementVec.Scale(factor);
-            newPnt = heightPnt.Translated(displacementVec);
+            newPoint = heightPnt.Translated(displacementVec);
         }
-    } else newPnt = point;
+    } else newPoint = point;
 
-    point = newPnt;
+    point = newPoint;
 }
 
 void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor,
@@ -305,7 +303,7 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real
 
 }
 
-void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func,
+void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool sheer,
          bool verbose) {
 
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
@@ -314,7 +312,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
     Standard_Integer count(1);
     for (auto current_pole: poles) {
         gp_Pnt new_pole(current_pole);
-        TaperPoint(new_pole, ax, func, true, false);
+        TaperPoint(new_pole, ax, func, sheer, false);
         new_poles[count] = new_pole;
 
         count++;
@@ -406,7 +404,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 }
 
 void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
-              function<Standard_Real(Standard_Real)> func,
+              function<Standard_Real(Standard_Real)> func, bool sheer,
               bool verbose) {
 
 }
