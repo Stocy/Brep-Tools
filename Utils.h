@@ -71,13 +71,17 @@ struct taperParam {
 /**
  * Taper a point, according to a single argument function.
  * the argument given to the function is the height of the point in ax coordinate system
- * if uniform is set to true, every point at the same height will displaced the same amount
- * @param pnt
+ * if sheer is set to true, every point at the same height will displaced the same amount :
+ * this mean the result of the taper function is the *size* of the displacement vector
+ * which is then used to translate the original point accordingly.
+ * Otherwise the result of the taper function is used as a factor to scale the displacement vector,
+ * the height point of the point in ax is then displaced by the displacement vector.
+ * @param point
  * @param ax
  * @param taperFunc
  * @param verbose
  */
-void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool uniform = false, bool verbose = true);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool sheer = false, bool verbose = true);
 /**
  * Test the taperPnt function
  * @param pnt
@@ -89,7 +93,7 @@ void TaperPnt(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> ta
 void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor, bool verbose);
 
 /**
- * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPnt using func
+ * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPoint using func
  * @param bSplineCurve
  * @param ax
  * @param func

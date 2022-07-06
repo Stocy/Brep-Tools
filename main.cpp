@@ -34,16 +34,6 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-    //read step file
-    //TopoDS_Shape t_curve = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
-
-    // compute stats
-    //Stats_TopoShapes(t_curve);
-
-    // export TopoDS to step file
-    //ExportSTEP(t_curve, "out.step", "mm");
-
-    //StepFolder_Stats();
 
     //Loading bspline from step file
     TopoDS_Shape t_curve = ReadStep(string(SRCDIR) + "/bs_curve_rational.step");
@@ -55,69 +45,90 @@ int main(int argc, char **argv) {
     vector<Handle(Geom_BSplineSurface) > bSss = bSS(t_surf, false);
 
     Handle(Geom_BSplineCurve) a_bSC(bScs.at(0));
-    Handle(Geom_BSplineSurface) a_bSS(bSS(t_surf).at(0));
+    Handle(Geom_BSplineSurface) a_bfSS(bSS(t_surf).at(0));
 
     cout << "bs is " << (a_bSC.IsNull() ? "null" : "not null") << endl;
 
     //applying tapering
     if (!a_bSC.IsNull()) {
 
-        //set parameters for operation ie working plane
+        //set parameters for operation ie working plane/axis
         gp_Ax3 op_axis(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0));
-        //TaperPnt_CADStyle(a_bSC, op_axis, -numbers::pi / 100, true);
-        //TaperPnt_CADStyle(a_bSS, op_axis, -numbers::pi / 100, true);
 
+        //create taper function on the fly
+        //taper function need only one argument, if more needed, use a function with more arguments
+        //that will create the taper function
 
-        /*
-        TopoDS_Compound pts;
-        BRep_Builder builder;
-        builder.MakeCompound(pts);
-        for (gp_Pnt &pole : a_bSC->Poles()){
-            TaperPnt_CADStyle(pole,op_axis, [](auto r){return 0.05*r;},1,true);
-            BRepBuilderAPI_MakeVertex vertexBuilder = BRepBuilderAPI_MakeVertex(pole);
-            TopoDS_Shape vertex = vertexBuilder.Vertex();
-            builder.Add(pts, vertex);
-        }
-
-        ExportSTEP(pts,"pnts_bsc.step","mm");
-         */
-
-
-
-
-        //exporting result
-        //BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
-        //BRepBuilderAPI_MakeFace apiMakeFace;
-        //apiMakeFace.Init(a_bSS,true,0.00001);
-        //ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
-        //ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
-        auto func_angle = [](auto h) {
-            Standard_Real angle = 0.1;
-            //TODO line with the angle with function that create a function
-            //gp_Vec o, p(cos(angle), sin(angle));
+        // create a taper function with an angle ; angle in radian
+        auto angleTaperFunc = [](Standard_Real angle) {
+            double x(cos(angle)), y(sin(angle)), factor(y/x);
+            function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
+            return taperFunc;
         };
-        auto func = [](auto h) { return -h * 0.07; };
-        auto func_2 = [](auto h) { return -h/300; };
-        auto func_3 = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
+
+        // create a taper function knowing the distance you want to displace a point at a certain distance and heigh
+        auto displacementTaperFunc = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
             Standard_Real factor = ((distance + displacement)/distance)/height;
-            function<double(double)> afunc = [factor](Standard_Real h){ return h * factor; };
-            afunc(0.1);
-            return afunc;
+            function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
+            return taperFunc;
         };
-        auto func_exp = [](auto h) { return -h * h * 0.1; };
-        function<double(double)> func_test = func_3(20.0,20.0,2.0);
+
+        //some taper function examples ...
+        auto func_ex_1 = [](auto h) { return -h * 0.07; };
+        auto func_ex_2 = [](auto h) { return -h/300; };
+        auto func_ex_3 = [](auto h) { return -h * h * 0.1; };
+
+        function<double(double)> func_test = displacementTaperFunc(20.0,20.0,2.0);
+
+        //evaluate taper
         TaperBSC_eval(a_bSC, op_axis, func_test, 200);
-        cout << "heheeeee" << endl;
-        //a_bSC->MovePoint()
-
-        //STEP::ExtendedSTEPExporter stepExporter;
-        //stepExporter.AddShapeWithColor(cube, Quantity_NOC_RED);
-        //stepExporter.Write("ColoredCube.step");
-
     }
 
-    //a_bSC->LocalValue();
-    //GeomAPI_Interpolate interpolate;
 
+    //CODE EXAMPLES ...
+
+    //read step file
+    //TopoDS_Shape t_curve = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
+
+    //compute stats
+    //Stats_TopoShapes(t_curve);
+
+    //compute folder stats
+    //StepFolder_Stats();
+
+    // export TopoDS to step file
+    //ExportSTEP(t_curve, "out.step", "mm");
+
+
+    /////////////////////////////////////////////////////////////////////////
+    //-------------------------BASICALLY TRASH----------------------------//
+
+    //TaperPnt_CADStyle(a_bSC, op_axis, -numbers::pi / 100, true);
+    //TaperPnt_CADStyle(a_bSS, op_axis, -numbers::pi / 100, true);
+
+
+    /*
+    TopoDS_Compound pts;
+    BRep_Builder builder;
+    builder.MakeCompound(pts);
+    for (gp_Pnt &pole : a_bSC->Poles()){
+        TaperPnt_CADStyle(pole,op_axis, [](auto r){return 0.05*r;},1,true);
+        BRepBuilderAPI_MakeVertex vertexBuilder = BRepBuilderAPI_MakeVertex(pole);
+        TopoDS_Shape vertex = vertexBuilder.Vertex();
+        builder.Add(pts, vertex);
+    }
+
+    ExportSTEP(pts,"pnts_bsc.step","mm");
+     */
+
+
+
+
+    //exporting result
+    //BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
+    //BRepBuilderAPI_MakeFace apiMakeFace;
+    //apiMakeFace.Init(a_bSS,true,0.00001);
+    //ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
+    //ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
 
 }
