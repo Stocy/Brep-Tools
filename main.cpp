@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     if (!a_bSC.IsNull()) {
 
         //set parameters for operation ie working plane/axis
-        gp_Ax3 op_axis(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0));
+        gp_Ax3 op_axis(gp_Pnt(-0.001, 0, 0), gp_Dir(0, 1, 0));
 
         //create taper function on the fly
         //taper function need only one argument, if more needed, use a function with more arguments
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         function<double(double)> func_test = displacementTaperFunc(20.0,20.0,2.0);
 
         //evaluate taper
-        TaperBSC_eval(a_bSC, op_axis, func_test, 200);
+        TaperBSC_eval(a_bSC, op_axis, func_test, false,200);
     }
 
 

@@ -270,7 +270,7 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
     return res;
 }
 
-void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool sheer, bool verbose) {
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear, bool verbose) {
     gp_Vec normalVec(ax.Direction().XYZ());
     gp_Pnt opOrigin = ax.Location();
     gp_Vec pntVec(opOrigin, point);
@@ -284,7 +284,7 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
     gp_Pnt newPoint;
     gp_Vec displacementVec(heightPnt, point);
     if(abs(displacementVec.Magnitude()) > TOL && abs(height) > TOL){
-        if(sheer){
+        if(shear){
             displacementVec.Scale(factor / displacementVec.Magnitude());
             newPoint = point.Translated(displacementVec);
         }
@@ -303,7 +303,7 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real
 
 }
 
-void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool sheer,
+void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool shear,
          bool verbose) {
 
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
@@ -312,7 +312,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
     Standard_Integer count(1);
     for (auto current_pole: poles) {
         gp_Pnt new_pole(current_pole);
-        TaperPoint(new_pole, ax, func, sheer, false);
+        TaperPoint(new_pole, ax, func, shear, false);
         new_poles[count] = new_pole;
 
         count++;
@@ -327,7 +327,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
-                   function<Standard_Real(Standard_Real)> taperFunc, Standard_Integer discr) {
+                   function<Standard_Real(Standard_Real)> taperFunc, bool shear, Standard_Integer discr) {
 
     cout << "BSC TAPER verification" << endl;
     vector<Standard_Real> dists(discr + 1);
@@ -349,7 +349,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
     Handle(Geom_Geometry) tmp_geom = bSplineCurve->Copy();
     Handle(Geom_BSplineCurve) newCurve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    TaperBSC(newCurve, ax, taperFunc, true);
+    TaperBSC(newCurve, ax, taperFunc, shear);
 
     double sphereRadius(0.5);
     for (auto p: bSplineCurve->Poles()) {
@@ -363,6 +363,8 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
     BRepBuilderAPI_MakeEdge apiMakeEdge(newCurve);
     builder.Add(compound, apiMakeEdge.Shape());
+    BRepBuilderAPI_MakeEdge apiMakeEdgeOrig(bSplineCurve);
+    builder.Add(compound, apiMakeEdgeOrig.Shape());
 
     for (int i = 0; i <= discr; ++i) {
         Standard_Real U = (Standard_Real) i / discr;
@@ -397,12 +399,10 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
     cout << bSplineCurve->FirstParameter() << endl;
     cout << bSplineCurve->LastParameter() << endl;
 
-    BRepBuilderAPI_MakeWire makeWire;
     for (int i = 0; i < discr; ++i) {
         BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
         builder.Add(compound, vertex.Vertex());
         BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i + 1]);
-        makeWire.Add(makeEdge.Edge());
     }
 
     ExportSTEP(compound, "bsc_verif.step", "mm");
@@ -410,7 +410,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 }
 
 void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
-              function<Standard_Real(Standard_Real)> func, bool sheer,
+              function<Standard_Real(Standard_Real)> func, bool shear,
               bool verbose) {
 
 }

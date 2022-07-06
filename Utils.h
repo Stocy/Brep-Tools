@@ -71,7 +71,7 @@ struct taperParam {
 /**
  * Taper a point, according to a single argument function.
  * the argument given to the function is the height of the point in ax coordinate system
- * if sheer is set to true, every point at the same height will displaced the same amount :
+ * if shear is set to true, every point at the same height will displaced the same amount :
  * this mean the result of the taper function is the *size* of the displacement vector
  * which is then used to translate the original point accordingly.
  * Otherwise the result of the taper function is used as a factor to scale the displacement vector,
@@ -81,7 +81,7 @@ struct taperParam {
  * @param taperFunc
  * @param verbose
  */
-void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool sheer = false, bool verbose = true);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = true);
 /**
  * Test the taperPnt function
  * @param pnt
@@ -99,7 +99,7 @@ void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real
  * @param func
  * @param verbose
  */
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool sheer = false, bool verbose = false);
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool shear = false, bool verbose = false);
 /**
  * Evaluate a Taper on BSpline Curve against the tapered discretization,
  * export a step file to visualize
@@ -108,7 +108,7 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, functio
  * @param taperFunc
  * @param discr
  */
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Integer discr);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear, Standard_Integer discr = 200);
 /**
  * Taper a BSpline Surface (BSS)
  * @param bSplineSurface
@@ -116,7 +116,7 @@ void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, fu
  * @param func
  * @param verbose
  */
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool sheer = false, bool verbose = false);
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool shear = false, bool verbose = false);
 
 /**
  * DEPRECATED
