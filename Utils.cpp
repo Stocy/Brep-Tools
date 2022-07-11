@@ -19,6 +19,7 @@
 #include <ShapeAnalysis_Curve.hxx>
 #include <gp_Sphere.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepTools_ReShape.hxx>
 #include "BRepBuilderAPI_MakeVertex.hxx"
 #include "TopoDS_Builder.hxx"
 #include "Utils.h"
@@ -297,8 +298,8 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
     point = newPoint;
 }
 
-void TaperPnt_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor,
-                   bool verbose) {
+void TaperPoint_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor,
+                     bool verbose) {
 
 
 }
@@ -370,7 +371,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
         Standard_Real U = (Standard_Real) i / discr;
         cout << U << endl;
         gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
-        TaperPoint(pnt, ax, taperFunc, true, false);
+        TaperPoint(pnt, ax, taperFunc, shear, false);
         discr_pnts[i] = pnt;
         //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,newCurve);
         //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
@@ -410,8 +411,17 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 }
 
 void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
-              function<Standard_Real(Standard_Real)> func, bool shear,
+              function<Standard_Real(Standard_Real)> taperFunc, bool shear,
               bool verbose) {
+
+    TColgp_Array2OfPnt poles(bSplineSurface->Poles());
+    for (int i = 1; i <= poles.NbRows(); ++i) {
+        for (int j = 1; j <= poles.NbColumns(); ++j) {
+            gp_Pnt new_pole(poles(i, j));
+            TaperPoint(new_pole, ax, taperFunc,shear);
+            bSplineSurface->SetPole(i, j, new_pole);
+        }
+    }
 
 }
 
@@ -557,12 +567,6 @@ void TaperBSC_eval_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax
 
 void TaperBSS_CADStyle(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad,
                        bool verbose) {
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
     TColgp_Array2OfPnt poles(bSplineSurface->Poles());
     for (int i = 1; i <= poles.NbRows(); ++i) {
         for (int j = 1; j <= poles.NbColumns(); ++j) {
@@ -571,7 +575,6 @@ void TaperBSS_CADStyle(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3
             bSplineSurface->SetPole(i, j, new_pole);
         }
     }
-    cout.rdbuf(orig_buf);
 }
 
 void setColor(TopoDS_Shape shape) {
@@ -579,5 +582,17 @@ void setColor(TopoDS_Shape shape) {
     shapeTool->Init();
     shapeTool->AddShape(shape);
     // setColor(shape);
+
+}
+
+void
+TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc,
+           bool shear, bool verbose) {
+    BRepTools_ReShape reshaper;
+
+    for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
+
+        }
+    }
 
 }
