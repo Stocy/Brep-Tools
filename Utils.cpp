@@ -591,8 +591,9 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
     BRepTools_ReShape reshaper;
 
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
-
-        }
+        //Handle(Geom_BSplineSurface)::DownCast(explorer.Current())
+        //reshaper.Replace();
+    }
     }
 
 }
