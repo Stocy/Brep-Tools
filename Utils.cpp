@@ -5,7 +5,6 @@
 #include <GeomAPI_IntCS.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Curve.hxx>
-#include <Geom_BSplineSurface.hxx>
 #include <gp_Lin.hxx>
 #include <TopoDS_Edge.hxx>
 #include <GeomConvert.hxx>
@@ -14,19 +13,23 @@
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <BRepBuilderAPI.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRep_Builder.hxx>
 #include <ShapeAnalysis_Curve.hxx>
-#include <gp_Sphere.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepTools_ReShape.hxx>
 #include "BRepBuilderAPI_MakeVertex.hxx"
 #include "TopoDS_Builder.hxx"
-#include "Utils.h"
 #include "TopoDS_Shape.hxx"
+#include "Utils.h"
 #include "Geom_Geometry.hxx"
+#include <Geom_BSplineSurface.hxx>
 #include "Geom_BoundedCurve.hxx"
+#include "Geom_Surface.hxx"
 #include "Geom_Curve.hxx"
+#include <gp_Sphere.hxx>
+#include <ShapeAnalysis_FreeBounds.hxx>
 
 #define TOL 0.0001
 
@@ -591,8 +594,19 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
     BRepTools_ReShape reshaper;
 
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
-        //Handle(Geom_BSplineSurface)::DownCast(explorer.Current())
-        //reshaper.Replace();
+        TopoDS_Face face = TopoDS::Face(explorer.Current());
+
+        const opencascade::handle<Geom_Surface> &surface = BRep_Tool::Surface(face);
+        Handle(Geom_BSplineSurface) bsSurface = Handle(Geom_BSplineSurface)::DownCast(surface);
+        TaperBSS(bsSurface,ax,taperFunc);
+
+        //Handle(Geom_BSplineCurve) bsCurve =  Handle(Geom_BSplineCurve)::DownCast(surface);
+        TopoDS_Compound wires = ShapeAnalysis_FreeBounds(face).GetClosedWires();
+        TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
+        TopoDS_Wire wire = TopoDS::Wire(explorerWire.Current());
+
+        TopoDS_Face newFace = BRepBuilderAPI_MakeFace(bsSurface, wire);
+        reshaper.Replace(face,newFace);
     }
     }
 
