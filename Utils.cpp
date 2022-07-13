@@ -58,20 +58,10 @@ static const char *faceContinuity[] = {
 
 map<string, int> edgeType_count, faceType_count;
 
-TopoDS_Shape ReadStep(string path) {
-    STEPControl_Reader reader;
-    IFSelect_ReturnStatus stat = reader.ReadFile(path.c_str());
-    IFSelect_PrintCount mode = IFSelect_ListByItem;
-    //reader.PrintCheckLoad(false, mode);
-
-    Standard_Integer NbRoots = reader.NbRootsForTransfer();                      //Transfer whole file
-    Standard_Integer num = reader.TransferRoots();
-    Standard_Integer NbTrans = reader.TransferRoots();
-
-    TopoDS_Shape result = reader.OneShape();
-    return result;
-}
-
+/**
+ * Compute stats for a TopoDS shape, bool to turn verbose on or off
+ * @param shape the shape to gather stat from
+ */
 void Stats_TopoShapes(const TopoDS_Shape &shape, bool verbose) {
     Standard_Integer count(0);
     std::vector<Geom_Surface> surfs;
@@ -134,6 +124,10 @@ void Stats_TopoShapes(const TopoDS_Shape &shape, bool verbose) {
     cout.rdbuf(orig_buf);
 }
 
+/**
+ * Compute step files stats and store them in a csv file
+ * @param folder_path folder path containing step files
+ */
 void StepFolder_Stats(string folder_path) {
     //init
     cout << "------------------------------------------------------" << endl;
@@ -194,6 +188,30 @@ void StepFolder_Stats(string folder_path) {
     cout << "Stats writen to :\n" << stat_file << endl;
 }
 
+/**
+ * Read a step file from a path
+ * @return TopoDS_Shape shape with all roots
+ */
+TopoDS_Shape ReadStep(string path) {
+    STEPControl_Reader reader;
+    IFSelect_ReturnStatus stat = reader.ReadFile(path.c_str());
+    IFSelect_PrintCount mode = IFSelect_ListByItem;
+    //reader.PrintCheckLoad(false, mode);
+
+    Standard_Integer NbRoots = reader.NbRootsForTransfer();                      //Transfer whole file
+    Standard_Integer num = reader.TransferRoots();
+    Standard_Integer NbTrans = reader.TransferRoots();
+
+    TopoDS_Shape result = reader.OneShape();
+    return result;
+}
+
+/**
+ * Export TopoDS_Shape in STEP file with filename
+ * @param shape
+ * @param filename
+ * @param unit
+ */
 void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string &unit) {
     cout << "------------------ exporting STEP in " << filename << "--------------------" << endl;
     if (shape.IsNull()) {
@@ -217,6 +235,10 @@ void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string 
     }
 }
 
+/**
+ * Get BSpline Curves in a TopoDS_Shape
+ * @return vector of BSpline Curves
+ */
 vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
     TopoDS_Edge bs_edge;
     Handle(Geom_BSplineCurve) a_bs;
@@ -243,6 +265,10 @@ vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
     return res;
 }
 
+/**
+ * Get BSpline Surfaces in a TopoDS_Shape
+ * @return vector of BSpline Surfaces
+ */
 vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
 
     vector<Handle(Geom_BSplineSurface) > res;
@@ -307,8 +333,8 @@ void TaperPoint_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Re
 
 }
 
-void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> func, bool shear,
-         bool verbose) {
+void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear,
+              bool verbose) {
 
     TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
 
@@ -316,7 +342,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
     Standard_Integer count(1);
     for (auto current_pole: poles) {
         gp_Pnt new_pole(current_pole);
-        TaperPoint(new_pole, ax, func, shear, false);
+        TaperPoint(new_pole, ax, taperFunc, shear, false);
         new_poles[count] = new_pole;
 
         count++;
