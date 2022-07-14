@@ -473,166 +473,6 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams tap
     TaperBSS(bSplineSurface,taperParams.ax,taperParams.taperFunc,taperParams.type,verbose);
 }
 
-void TaperPnt_CADStyle(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angleRad, bool verbose = true) {
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
-    gp_Vec normal_vec(ax.Direction().XYZ());
-    gp_Pnt op_origin = ax.Location();
-    gp_Vec point_vec_u(op_origin, pnt);
-
-    cout << "////////////////////////////" << endl;
-    cout << "point :" << pnt.Coord().X() << " " << pnt.Coord().Y() << " " << pnt.Coord().Z() << endl;
-    //cout << "vec_op " << point_vec_u.X() <<" "<< point_vec_u.Y() <<" "<< point_vec_u.Z() << endl;
-    //cout << "vecZ_op " << normal_vec.X() <<" "<< normal_vec.Y() <<" "<< normal_vec.Z() << endl;
-    cout << "dot_p n x u :" << point_vec_u.Dot(normal_vec) << endl;
-    Standard_Real height = point_vec_u.Dot(normal_vec) / (pow(normal_vec.Magnitude(), 2));
-    cout << "height :" << height << endl;
-
-    gp_Lin lin(op_origin, normal_vec);
-    gp_Pnt new_pt(pnt);
-
-    if (height != 0 && !lin.Contains(pnt, TOL)) {
-
-        //Defining a rotative_line to rotate about operation axis
-        gp_Ax3 ax_pt(op_origin, point_vec_u);
-        gp_Vec rotate_vec(point_vec_u);
-        rotate_vec.Cross(normal_vec);
-        gp_Ax1 rotate_axis(op_origin, rotate_vec);
-        ax_pt.Rotate(rotate_axis, angleRad);
-        Handle(Geom_Line) rotative_line = new Geom_Line(op_origin, ax_pt.Direction().XYZ());
-
-        //Defining a plane with new point height in operation axis coordinates
-        Handle(Geom_Plane) plane = new Geom_Plane(pnt, normal_vec);
-
-        //Computing intersection between rotative_line and plane to find new point position
-        GeomAPI_IntCS intCs(rotative_line, plane);
-        if (intCs.IsDone() && intCs.NbPoints() > 0) {
-            new_pt = intCs.Point(1);
-            cout << "new point :" << new_pt.Coord().X() << " " << new_pt.Coord().Y() << " " << new_pt.Coord().Z()
-                 << endl;
-        }
-    } else {
-        cout << "point not moved" << endl;
-    }
-    pnt = new_pt;
-    cout.rdbuf(orig_buf);
-}
-
-void TaperBSC_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose) {
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
-    TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
-
-    //displacing every control points
-    Standard_Integer count(1);
-    for (auto current_pole: poles) {
-        gp_Pnt new_pole(current_pole);
-        TaperPnt_CADStyle(new_pole, ax, angle_rad);
-        new_poles[count] = new_pole;
-        count++;
-    }
-    count--;
-
-    Geom_BSplineCurve res(*bSplineCurve);
-    for (int i = 1; i <= count; ++i) {
-        res.SetPole(i, new_poles[i]);
-    }
-    *bSplineCurve = res;
-
-    cout.rdbuf(orig_buf);
-}
-
-void TaperBSC_eval_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad,
-                            Standard_Integer discr) {
-    cout << "BSC TAPER verification" << endl;
-    vector<Standard_Real> dists(discr + 1);
-    vector<gp_Pnt> discr_pnts(discr + 1);
-
-    TopoDS_Compound compound;
-    BRep_Builder builder;
-    builder.MakeCompound(compound);
-
-    Handle(Geom_Geometry) tmp_geom = bSplineCurve->Copy();
-    Handle(Geom_BSplineCurve) new_curve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    TaperBSC_CADStyle(new_curve, ax, angle_rad, false);
-    BRepBuilderAPI_MakeEdge apiMakeEdge(new_curve);
-    builder.Add(compound, apiMakeEdge.Shape());
-
-    for (int i = 0; i <= discr; ++i) {
-        Standard_Real U = (Standard_Real) i / discr;
-        cout << U << endl;
-        gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
-        TaperPnt_CADStyle(pnt, ax, angle_rad, false);
-        discr_pnts[i] = pnt;
-        //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,new_curve);
-        //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
-        ShapeAnalysis_Curve shapeAnalysisCurve;
-        Standard_Real dst = 0.0, param(0.0);
-
-        shapeAnalysisCurve.Project(new_curve, pnt, 0, pnt_on_curve, param);
-        BRepBuilderAPI_MakeEdge makeEdge(pnt, pnt_on_curve);
-        //if (!pnt.IsEqual(pnt_on_curve,0)) builder.Add(compound, makeEdge.Shape());
-        dst = pnt_on_curve.Distance(pnt);
-        dists[i] = dst;
-        cout << "dst to tapered bSpline : " << dst << endl;
-
-    }
-    Standard_Real min(dists[0]), max(min), sum(0);
-    for (auto d: dists) {
-        if (d > max) max = d;
-        if (d < min) min = d;
-        sum += d;
-    }
-
-
-    for (int i = 1; i <= bSplineCurve->NbKnots(); ++i) {
-        Standard_Real U = bSplineCurve->Knot(i);
-        cout << U << endl;
-    }
-    cout << bSplineCurve->FirstParameter() << endl;
-    cout << bSplineCurve->LastParameter() << endl;
-
-    BRepBuilderAPI_MakeWire makeWire;
-
-    for (int i = 0; i < discr; ++i) {
-        BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
-        builder.Add(compound, vertex.Vertex());
-        BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i + 1]);
-        makeWire.Add(makeEdge.Edge());
-    }
-
-    ExportSTEP(compound, "bsc_verif.step", "mm");
-    cout << "min : " << min << ", max : " << max << " average : " << sum / discr << endl;
-}
-
-void TaperBSS_CADStyle(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad,
-                       bool verbose) {
-    TColgp_Array2OfPnt poles(bSplineSurface->Poles());
-    for (int i = 1; i <= poles.NbRows(); ++i) {
-        for (int j = 1; j <= poles.NbColumns(); ++j) {
-            gp_Pnt new_pole(poles(i, j));
-            TaperPnt_CADStyle(new_pole, ax, angle_rad);
-            bSplineSurface->SetPole(i, j, new_pole);
-        }
-    }
-}
-
-void setColor(TopoDS_Shape shape) {
-    Handle(XCAFDoc_ShapeTool) shapeTool;
-    shapeTool->Init();
-    shapeTool->AddShape(shape);
-    // TODO setColor(shape);
-
-}
-
 TopoDS_Compound
 TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc,
            TAPER_TYPE taperType, bool verbose) {
@@ -667,4 +507,12 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
 
 TopoDS_Compound TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose) {
     TaperShape(shape,taperParams.ax,taperParams.taperFunc,taperParams.type,verbose);
+}
+
+void setColor(TopoDS_Shape shape) {
+    Handle(XCAFDoc_ShapeTool) shapeTool;
+    shapeTool->Init();
+    shapeTool->AddShape(shape);
+    // TODO setColor(shape);
+
 }

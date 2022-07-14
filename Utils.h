@@ -168,54 +168,6 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
 TopoDS_Compound
 TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose = false);
 
-/**
- * DEPRECATED
- * Taper a point pnt with an angle, the CAD way,
- * should be refactored as function of taper taking point's x,y,z as argument
- * @param pnt
- * @param ax
- * @param angleRad
- * @param verbose
- */
-void TaperPnt_CADStyle(gp_Pnt &pnt, gp_Ax3 &ax, Standard_Real angleRad, bool verbose);
-/**
- * DEPRECATED
- * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPnt_CADStyle
- * @param bSplineCurve
- * @param ax
- * @param angle_rad
- * @param verbose
- */
-void TaperBSC_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
-
-/**
- * Evaluate a Taper on BSpline Curve against the tapered discretization
- * @param bSplineCurve
- * @param ax
- * @param angle_rad
- * @param discr
- */
-void TaperBSC_eval_CADStyle(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, Standard_Real angle_rad, Standard_Integer discr);
-
-/**
- * Taper a BSpline Surface (BSS)
- * @param bSplineSurface
- * @param ax
- * @param angle_rad
- * @param verbose
- */
-void TaperBSS_CADStyle(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, Standard_Real angle_rad, bool verbose);
-static bool cmp(pair<string, int>& a, pair<string, int>& b){
-    return a.second > b.second;}
-
-static vector<pair<string,int>> sort_map(map<string, int>& M){
-    vector<pair<string, int> > A;
-    for (auto& it : M) {
-        A.push_back(it);
-    }
-    sort(A.begin(), A.end(), cmp);
-    return A;}
-
 void setColor(TopoDS_Shape);
 #endif //OCC_TEST_UTILS_H
 
