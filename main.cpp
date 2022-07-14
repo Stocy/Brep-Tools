@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         function<double(double)> func_test = TaperFunctions::displacementTaperFunc(20.0,20.0,-2.0);
 
         //evaluate taper
-        TaperBSC_eval(a_bSC, op_axis, func_test, false,200);
+        TaperBSC_eval(a_bSC, op_axis, func_test, TRANSLATE,200);
 
         //auto a = TaperShape(cube,op_axis,func_test);
         //ExportSTEP(a,"testWhole.step","mm");

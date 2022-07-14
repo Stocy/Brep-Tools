@@ -88,9 +88,10 @@ namespace TaperFunctions{
 /**
  * define different uses for value returned by the taper function f
  */
-enum TaperTypes{
-    SCALE, //scale the xy vector of point by f
-    TRANSLATE //translate the point by an the xy vector with f as size
+enum TAPER_TYPE{
+    SCALE, //scale the xy vector of the point by f
+    TRANSLATE, //translate the point by the xy vector scaled to f
+    CUSTOM // not implemented, allow for other types
 };
 
 /**
@@ -98,7 +99,7 @@ enum TaperTypes{
  */
 struct TaperParams{
     gp_Ax3 ax;
-    TaperTypes type;
+    TAPER_TYPE type;
     function<double(double)> taperFunc;
 };
 
@@ -115,18 +116,10 @@ struct TaperParams{
  * @param taperFunc
  * @param verbose
  */
-void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = true);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = true);
 
-/**
- * Test the TaperPoint function
- * WIP
- * @param pnt
- * @param ax
- * @param taperFunc
- * @param tFuncFacor
- * @param verbose
- */
-void TaperPoint_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor, bool verbose);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, bool verbose = true);
+
 /**
  * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPoint using taperFunc
  * @param bSplineCurve
@@ -134,7 +127,9 @@ void TaperPoint_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Re
  * @param taperFunc
  * @param verbose
  */
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = false);
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, bool verbose = false);
 
 /**
  * Evaluate a Taper on BSpline Curve against the tapered discretization,
@@ -145,7 +140,9 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, functio
  * @param taperFunc
  * @param discr
  */
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear, Standard_Integer discr = 200);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, Standard_Integer discr = 200);
+
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, Standard_Integer discr = 200);
 /**
  * Taper a BSpline Surface (BSS)
  * @param bSplineSurface
@@ -153,7 +150,10 @@ void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, fu
  * @param taperFunc
  * @param verbose
  */
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = false);
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams taperParams, bool verbose = false);
+
 /**
  * Taper a shape by tapering its sub components
  * @param shape
@@ -163,7 +163,10 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, fun
  * @param verbose
  */
 TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = false);
+TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+
+TopoDS_Compound
+TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose = false);
 
 /**
  * DEPRECATED
