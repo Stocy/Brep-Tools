@@ -30,6 +30,7 @@
 #include "Geom_Curve.hxx"
 #include <gp_Sphere.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
+#include "GeomConvert_ApproxSurface.hxx"
 
 #define TOL 0.0001
 
@@ -614,26 +615,34 @@ void setColor(TopoDS_Shape shape) {
 
 }
 
-void
+TopoDS_Compound
 TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc,
            bool shear, bool verbose) {
     BRepTools_ReShape reshaper;
 
-    for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
-        TopoDS_Face face = TopoDS::Face(explorer.Current());
+    TopoDS_Compound compound;
+    BRep_Builder builder;
+    builder.MakeCompound(compound);
 
-        const opencascade::handle<Geom_Surface> &surface = BRep_Tool::Surface(face);
-        Handle(Geom_BSplineSurface) bsSurface = Handle(Geom_BSplineSurface)::DownCast(surface);
+    for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
+
+        const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(explorer.Current()));
+        GeomAbs_Shape absShape = GeomAbs_C2;
+        GeomConvert_ApproxSurface approxSurface(surface,TOL,absShape,absShape,10,10,10,1);
+        Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
         TaperBSS(bsSurface,ax,taperFunc);
 
         //Handle(Geom_BSplineCurve) bsCurve =  Handle(Geom_BSplineCurve)::DownCast(surface);
-        TopoDS_Compound wires = ShapeAnalysis_FreeBounds(face).GetClosedWires();
+        ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(explorer.Current());
+        TopoDS_Compound wires = freeBounds.GetClosedWires();
         TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
         TopoDS_Wire wire = TopoDS::Wire(explorerWire.Current());
 
         TopoDS_Face newFace = BRepBuilderAPI_MakeFace(bsSurface, wire);
-        reshaper.Replace(face,newFace);
+        builder.Add(compound,newFace);
+        reshaper.Replace(explorer.Current(),newFace);
+        cout << "here it is" <<endl;
     }
-    }
-
+    //builder.Add(compound,shape);
+    return compound;
 }

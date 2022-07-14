@@ -28,6 +28,8 @@
 #include "Utils.h"
 #include "BRepBuilderAPI.hxx"
 #include "TopoDS_Vertex.hxx"
+#include <BRepPrimAPI_MakeBox.hxx>
+#include <GeomConvert_ApproxSurface.hxx>
 //#include <occutils/ExtendedSTEP.hxx>
 //#include <occutils/Primitive.hxx>
 
@@ -38,7 +40,7 @@ int main(int argc, char **argv) {
     //Loading bspline from step file
     TopoDS_Shape t_curve = ReadStep(string(SRCDIR) + "/bs_curve_rational.step");
     TopoDS_Shape t_surf = ReadStep(string(SRCDIR) + "/bs_surf.step");
-
+    TopoDS_Shape cube = BRepPrimAPI_MakeBox(gp_Pnt(-10,-10,-10),gp_Pnt(10,10,10));
     //Stats_TopoShapes(t_curve);
     //Stats_TopoShapes(t_surf);
     vector<Handle(Geom_BSplineCurve) > bScs = bSC(t_curve, false);
@@ -58,30 +60,19 @@ int main(int argc, char **argv) {
         //create taper function on the fly
         //taper function need only one argument, if more needed, use a function with more arguments
         //that will create the taper function
-
-        // create a taper function with an angle ; angle in radian
-        auto angleTaperFunc = [](Standard_Real angle) {
-            double x(cos(angle)), y(sin(angle)), factor(y/x);
-            function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
-            return taperFunc;
-        };
-
-        // create a taper function knowing the distance you want to displace a point at a certain distance and heigh
-        auto displacementTaperFunc = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
-            Standard_Real factor = ((distance + displacement)/distance)/height;
-            function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
-            return taperFunc;
-        };
-
         //some taper function examples ...
         auto func_ex_1 = [](auto h) { return -h * 0.07; };
         auto func_ex_2 = [](auto h) { return h/1500; };
         auto func_ex_3 = [](auto h) { return -log(h); };
+        //more function in TaperFunctions namespace
 
-        function<double(double)> func_test = displacementTaperFunc(20.0,20.0,-2.0);
+        function<double(double)> func_test = TaperFunctions::displacementTaperFunc(20.0,20.0,-2.0);
 
         //evaluate taper
         TaperBSC_eval(a_bSC, op_axis, func_test, false,200);
+
+        //auto a = TaperShape(cube,op_axis,func_test);
+        //ExportSTEP(a,"testWhole.step","mm");
     }
 
 

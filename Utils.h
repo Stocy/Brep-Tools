@@ -64,6 +64,44 @@ vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&,bool verbose = true);
  */
 vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,bool verbose = true);
 
+
+/**
+ * Taper functions namespace
+ */
+namespace TaperFunctions{
+    // create a taper function with an angle
+    inline auto angleTaperFunc = [](Standard_Real angle) {
+        double x(cos(angle)), y(sin(angle)), factor(y/x);
+        function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
+        return taperFunc;
+    };
+
+    // create a taper function knowing the distance you want to displace a point at a certain distance and height
+    inline auto displacementTaperFunc = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
+        Standard_Real factor = 1-(distance + displacement)/distance;
+        function<double(double)> taperFunc = [factor, height](Standard_Real h){
+            cout << "h " << h << ", H " << height <<endl;
+            return 1+(factor * (h/height)); };
+        return taperFunc;
+    };
+};
+/**
+ * define different uses for value returned by the taper function f
+ */
+enum TaperTypes{
+    SCALE, //scale the xy vector of point by f
+    TRANSLATE //translate the point by an the xy vector with f as size
+};
+
+/**
+ * Taper parameters
+ */
+struct TaperParams{
+    gp_Ax3 ax;
+    TaperTypes type;
+    function<double(double)> taperFunc;
+};
+
 /**
  * Taper a point, according to a single argument function.
  * the argument given to the function is the height of the point in ax coordinate system
@@ -124,7 +162,8 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, fun
  * @param shear
  * @param verbose
  */
-void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = false);
+TopoDS_Compound
+TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, bool shear = false, bool verbose = false);
 
 /**
  * DEPRECATED
