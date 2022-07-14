@@ -70,18 +70,19 @@ vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,bool verbose = true);
  */
 namespace TaperFunctions{
     // create a taper function with an angle
-    inline auto angleTaperFunc = [](Standard_Real angle) {
+    inline auto angle = [](Standard_Real angle) {
         double x(cos(angle)), y(sin(angle)), factor(y/x);
         function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
         return taperFunc;
     };
 
     // create a taper function knowing the distance you want to displace a point at a certain distance and height
-    inline auto displacementTaperFunc = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
-        Standard_Real factor = 1-(distance + displacement)/distance;
+    inline auto displacement = [](Standard_Real distance, Standard_Real height, Standard_Real displacement){
+        Standard_Real factor = ((distance + abs(displacement))/distance) - 1.0;
+        if(displacement < 0) factor = -factor;
         function<double(double)> taperFunc = [factor, height](Standard_Real h){
             cout << "h " << h << ", H " << height <<endl;
-            return 1+(factor * (h/height)); };
+            return 1.0 + (factor * (h/height)); };
         return taperFunc;
     };
 };
@@ -98,19 +99,19 @@ enum TAPER_TYPE{
  * Taper parameters
  */
 struct TaperParams{
-    gp_Ax3 ax;
+    gp_Ax3 axis;
     TAPER_TYPE type;
-    function<double(double)> taperFunc;
+    function<double(double)> func;
 };
 
 /**
  * Taper a point, according to a single argument function.
- * the argument given to the function is the height of the point in ax coordinate system
+ * the argument given to the function is the height of the point in axis coordinate system
  * if shear is set to true, every point at the same height will displaced the same amount :
  * this mean the result of the taper function is the *size* of the displacement vector
  * which is then used to translate the original point accordingly.
  * Otherwise the result of the taper function is used as a factor to scale the displacement vector,
- * the height point of the point in ax is then displaced by the displacement vector.
+ * the height point of the point in axis is then displaced by the displacement vector.
  * @param point
  * @param ax
  * @param taperFunc
@@ -121,7 +122,7 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
 void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, bool verbose = true);
 
 /**
- * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPoint using taperFunc
+ * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPoint using func
  * @param bSplineCurve
  * @param ax
  * @param taperFunc
@@ -171,6 +172,3 @@ TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose = false);
 void setColor(TopoDS_Shape);
 #endif //OCC_TEST_UTILS_H
 
-struct taperParam {
-    gp_Ax3 ax;
-};

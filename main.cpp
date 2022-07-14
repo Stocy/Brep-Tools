@@ -66,10 +66,11 @@ int main(int argc, char **argv) {
         auto func_ex_3 = [](auto h) { return -log(h); };
         //more function in TaperFunctions namespace
 
-        function<double(double)> func_test = TaperFunctions::displacementTaperFunc(20.0,20.0,-2.0);
-
+        TaperParams displacementTaper{
+            op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -4.0)
+        };
         //evaluate taper
-        TaperBSC_eval(a_bSC, op_axis, func_test, TRANSLATE,200);
+        TaperBSC_eval(a_bSC, displacementTaper,200);
 
         //auto a = TaperShape(cube,op_axis,func_test);
         //ExportSTEP(a,"testWhole.step","mm");

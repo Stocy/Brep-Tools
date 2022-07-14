@@ -330,7 +330,7 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)
 }
 
 void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, bool verbose) {
-    TaperPoint(point,taperParams.ax,taperParams.taperFunc,taperParams.type, verbose);
+    TaperPoint(point, taperParams.axis, taperParams.func, taperParams.type, verbose);
 }
 
 void TaperPoint_test(gp_Pnt &pnt, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, Standard_Real tFuncFacor,
@@ -363,7 +363,7 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
 }
 
 void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, TaperParams taperParams, bool verbose) {
-    TaperBSC(bSplineCurve,taperParams.ax,taperParams.taperFunc,taperParams.type,verbose);
+    TaperBSC(bSplineCurve, taperParams.axis, taperParams.func, taperParams.type, verbose);
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
@@ -451,7 +451,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, TaperParams taperParams,
                    Standard_Integer discr) {
-    TaperBSC_eval(bSplineCurve,taperParams.ax,taperParams.taperFunc,taperParams.type, discr);
+    TaperBSC_eval(bSplineCurve, taperParams.axis, taperParams.func, taperParams.type, discr);
 }
 
 void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
@@ -470,7 +470,7 @@ void TaperBSS(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp
 }
 
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams taperParams, bool verbose){
-    TaperBSS(bSplineSurface,taperParams.ax,taperParams.taperFunc,taperParams.type,verbose);
+    TaperBSS(bSplineSurface, taperParams.axis, taperParams.func, taperParams.type, verbose);
 }
 
 TopoDS_Compound
@@ -506,7 +506,7 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
 }
 
 TopoDS_Compound TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose) {
-    TaperShape(shape,taperParams.ax,taperParams.taperFunc,taperParams.type,verbose);
+    TaperShape(shape, taperParams.axis, taperParams.func, taperParams.type, verbose);
 }
 
 void setColor(TopoDS_Shape shape) {
