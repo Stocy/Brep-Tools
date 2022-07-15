@@ -3,7 +3,6 @@
 #include <TopoDS.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <GeomAPI_IntCS.hxx>
-#include <Geom_Line.hxx>
 #include <Geom_Curve.hxx>
 #include <gp_Lin.hxx>
 #include <TopoDS_Edge.hxx>
@@ -18,14 +17,12 @@
 #include <BRep_Builder.hxx>
 #include <ShapeAnalysis_Curve.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
-#include <BRepTools_ReShape.hxx>
 #include "BRepBuilderAPI_MakeVertex.hxx"
 #include "TopoDS_Builder.hxx"
 #include "TopoDS_Shape.hxx"
 #include "Utils.h"
 #include "Geom_Geometry.hxx"
 #include <Geom_BSplineSurface.hxx>
-#include "Geom_BoundedCurve.hxx"
 #include "Geom_Surface.hxx"
 #include "Geom_Curve.hxx"
 #include <gp_Sphere.hxx>
@@ -64,43 +61,36 @@ map<string, int> edgeType_count, faceType_count;
  * Compute stats for a TopoDS shape, bool to turn verbose on or off
  * @param shape the shape to gather stat from
  */
-void Stats_TopoShapes(const TopoDS_Shape &shape, bool verbose) {
+void Stats_TopoShapes(const TopoDS_Shape &shape, int verboseLevel) {
     Standard_Integer count(0);
     std::vector<Geom_Surface> surfs;
-
-    // get underlying buffer
-    streambuf *orig_buf = cout.rdbuf();
-
-    // set null
-    if (!verbose)cout.rdbuf(NULL);
-
-
-    cout << "--------------- COUNT OF SHAPES OF != TYPES : ---------------" << endl;
-    cout << "/////////////////////////////////////////////////////////////" << endl;
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+    if (verboseLevel>0) cout << "--------------- COUNT OF SHAPES OF != TYPES : ---------------" << endl;
+    if (verboseLevel>0) cout << "/////////////////////////////////////////////////////////////" << endl;
     for (int shape_enum_value = 0; shape_enum_value != TopAbs_SHAPE; shape_enum_value++) {
         count = 0;
         TopAbs_ShapeEnum ev = static_cast<TopAbs_ShapeEnum>(shape_enum_value);
         for (TopExp_Explorer explorer(shape, ev); explorer.More(); explorer.Next()) {
             count++;
         }
-        cout << "nb of " << shape_types[shape_enum_value] << " is " << count << endl;
+        if (verboseLevel>0) cout << "nb of " << shape_types[shape_enum_value] << " is " << count << endl;
     }
 
-    cout << "--------------------------- FACES TYPES ---------------------" << endl;
-    cout << "/////////////////////////////////////////////////////////////" << endl;
+    if (verboseLevel>0) cout << "--------------------------- FACES TYPES ---------------------" << endl;
+    if (verboseLevel>0) cout << "/////////////////////////////////////////////////////////////" << endl;
     count = 0;
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
         count++;
         const opencascade::handle<Geom_Surface> &surface = BRep_Tool::Surface(TopoDS::Face((explorer.Current())));
-        //cout << "face " << count << " , continuity " << faceContinuity[surface->Continuity()] << endl;
-        //cout << typeid(surface).name() << endl;
+        //if (verboseLevel>0) cout << "face " << count << " , continuity " << faceContinuity[surface->Continuity()] << endl;
+        //if (verboseLevel>0) cout << typeid(surface).name() << endl;
         Standard_CString type = surface->DynamicType()->Name();
-        cout << "face " << count << " : " << type << endl;
+        if (verboseLevel>0) cout << "face " << count << " : " << type << endl;
         faceType_count.contains(type) ? faceType_count[type] += 1 : faceType_count[type] = 1;
     }
 
-    cout << "------------------ EDGES TYPES ------------------------------" << endl;
-    cout << "/////////////////////////////////////////////////////////////" << endl;
+    if (verboseLevel>0) cout << "------------------ EDGES TYPES ------------------------------" << endl;
+    if (verboseLevel>0) cout << "/////////////////////////////////////////////////////////////" << endl;
     count = 0;
     for (TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()) {
         count++;
@@ -108,22 +98,21 @@ void Stats_TopoShapes(const TopoDS_Shape &shape, bool verbose) {
         const opencascade::handle<Geom_Curve> &curve = BRep_Tool::Curve(TopoDS::Edge(explorer.Current()), first, last);
         if (!curve.IsNull()) {
             Standard_CString type = curve->DynamicType()->Name();
-            cout << "edge " << count << " : " << type << endl;
+            if (verboseLevel>0) cout << "edge " << count << " : " << type << endl;
             edgeType_count.contains(type) ? edgeType_count[type] += 1 : edgeType_count[type] = 1;
         }
     }
 
-    cout << "--------------- COUNT OF TYPES  : ---------------------------" << endl;
-    cout << "/////////////////////////////////////////////////////////////" << endl;
-    cout << "--------------------------- FACES ---------------------------" << endl;
+    if (verboseLevel>0) cout << "--------------- COUNT OF TYPES  : ---------------------------" << endl;
+    if (verboseLevel>0) cout << "/////////////////////////////////////////////////////////////" << endl;
+    if (verboseLevel>0) cout << "--------------------------- FACES ---------------------------" << endl;
     for (auto it = faceType_count.begin(); it != faceType_count.end(); ++it) {
-        cout << it->first << " " << it->second << endl;
+        if (verboseLevel>0) cout << it->first << " " << it->second << endl;
     }
-    cout << "--------------------------- EDGES ---------------------------" << endl;
+    if (verboseLevel>0) cout << "--------------------------- EDGES ---------------------------" << endl;
     for (auto it = edgeType_count.begin(); it != edgeType_count.end(); ++it) {
-        cout << it->first << " " << it->second << endl;
+        if (verboseLevel>0) cout << it->first << " " << it->second << endl;
     }
-    cout.rdbuf(orig_buf);
 }
 
 /**
@@ -146,7 +135,7 @@ void StepFolder_Stats(string folder_path) {
 
     for (auto &p: fs::directory_iterator(folder_path)) {
         cout << p.path().filename() << '\n';
-        Stats_TopoShapes(ReadStep(p.path()), false);
+        Stats_TopoShapes(ReadStep(p.path()), 0);
     }
     map<string, int> totFace, totEdge;
     totFace.insert(faceType_count.begin(), faceType_count.end());
@@ -168,7 +157,7 @@ void StepFolder_Stats(string folder_path) {
     for (auto &p: fs::directory_iterator(folder_path)) {
         for (auto it = faceType_count.begin(); it != faceType_count.end(); ++it) it->second = 0;
         for (auto it = edgeType_count.begin(); it != edgeType_count.end(); ++it) it->second = 0;
-        Stats_TopoShapes(ReadStep(p.path()), false);
+        Stats_TopoShapes(ReadStep(p.path()), 0);
         //string line( string(p.path().filename()) + ",");
         std::ostringstream file_number;
         file_number << std::setw(to_string(file_count).size() + 1) << std::setfill('0') << ++i;
@@ -214,8 +203,9 @@ TopoDS_Shape ReadStep(string path) {
  * @param filename
  * @param unit
  */
-void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string &unit) {
-    cout << "------------------ exporting STEP in " << filename << "--------------------" << endl;
+void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string &unit, int verboseLevel) {
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+    if (verboseLevel>0) cout << "------------------ exporting STEP in " << filename << "--------------------" << endl;
     if (shape.IsNull()) {
         throw new invalid_argument("Can't export null shape to STEP");
     }
@@ -241,11 +231,12 @@ void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string 
  * Get BSpline Curves in a TopoDS_Shape
  * @return vector of BSpline Curves
  */
-vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
+vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape, int verboseLevel) {
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
     TopoDS_Edge bs_edge;
     Handle(Geom_BSplineCurve) a_bs;
     vector<Handle(Geom_BSplineCurve) > res;
-    if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+    if(verboseLevel > 0) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
 
     for (TopExp_Explorer explorer(shape, TopAbs_EDGE); explorer.More(); explorer.Next()) {
         Standard_Real first(0.0), last(1.0);
@@ -254,16 +245,15 @@ vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
         if (!curve.IsNull()) {
             if (curve->IsInstance(Standard_Type::Instance<Geom_BSplineCurve>())) {
                 a_bs = GeomConvert::CurveToBSplineCurve(curve);
-                if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
-                if(verbose) cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
+                if(verboseLevel>0) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+                if(verboseLevel>0) cout << "bspline with " << a_bs->NbPoles() << " poles : " << endl;
                 for (auto pole: a_bs->Poles()) {
-                    if(verbose) cout << "BSC pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z() << endl;
+                    if(verboseLevel>0) cout << "BSC pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z() << endl;
                 }
                 res.push_back(a_bs);
             }
         }
     }
-
     return res;
 }
 
@@ -271,13 +261,13 @@ vector<Handle(Geom_BSplineCurve) > bSC(TopoDS_Shape &shape,bool verbose) {
  * Get BSpline Surfaces in a TopoDS_Shape
  * @return vector of BSpline Surfaces
  */
-vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
+vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,int verboseLevel) {
 
     vector<Handle(Geom_BSplineSurface) > res;
-    Stats_TopoShapes(shape);
+    Stats_TopoShapes(shape,verboseLevel-1);
     TopoDS_Face bs_face;
     Handle(Geom_BSplineSurface) a_bs;
-    if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+    if(verboseLevel>0) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
 
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More(); explorer.Next()) {
         Standard_Real first(0.0), last(1.0);
@@ -286,12 +276,12 @@ vector<Handle(Geom_BSplineSurface) > bSS(TopoDS_Shape &shape,bool verbose) {
         if (!surface.IsNull()) {
             if (surface->IsInstance(Standard_Type::Instance<Geom_BSplineSurface>())) {
                 a_bs = GeomConvert::SurfaceToBSplineSurface(surface);
-                if(verbose) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
-                if(verbose) cout << "bspline surface with " << a_bs->Poles().Size() << " poles : " << endl;
+                if(verboseLevel>0) cout << "bs is " << (a_bs.IsNull() ? "null" : "not null") << endl;
+                if(verboseLevel>0) cout << "bspline surface with " << a_bs->Poles().Size() << " poles : " << endl;
                 for (int i = 1; i <= a_bs->Poles().NbRows(); ++i) {
                     for (int j = 1; j <= a_bs->Poles().NbColumns(); ++j) {
                         gp_Pnt pole = a_bs->Pole(i, j);
-                        if(verbose) cout << "BSS pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z()
+                        if(verboseLevel>0) cout << "BSS pole " << pole.Coord().X() << " " << pole.Coord().Y() << " " << pole.Coord().Z()
                              << endl;
                     }
                 }
@@ -446,7 +436,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
         BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i + 1]);
     }
 
-    ExportSTEP(compound, "bsc_verif.step", "mm");
+    ExportSTEP(compound, "bsc_verif.step", "mm", 0);
     cout << "min : " << min << ", max : " << max << " average : " << sum / discr << endl;
 }
 
@@ -510,7 +500,7 @@ TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real
         builder.Add(compound,makeFace.Shape());
     }
 
-    ExportSTEP(compound,"test.step","mm");
+    ExportSTEP(compound, "test.step", "mm", 0);
     return compound;
 }
 

@@ -33,7 +33,7 @@ using namespace std;
  * Compute stats for a TopoDS shape, bool to turn verbose on or off
  * @param shape the shape to gather stat from
  */
-void Stats_TopoShapes(const TopoDS_Shape &shape, bool = true);
+void Stats_TopoShapes(const TopoDS_Shape &shape, int verboseLevel = 1);
 
 /**
  * Compute step files stats and store them in a csv file
@@ -53,19 +53,19 @@ TopoDS_Shape ReadStep(string path);
  * @param filename
  * @param unit
  */
-void ExportSTEP(const TopoDS_Shape& shape, const string& filename, const string& unit);
+void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string &unit, int verboseLevel = 1);
 
 /**
  * Get BSpline Curves in a TopoDS_Shape
  * @return vector of BSpline Curves
  */
-vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape&,bool verbose = true);
+vector<Handle(Geom_BSplineCurve)> bSC(TopoDS_Shape &shape, int verboseLevel = 0);
 
 /**
  * Get BSpline Surfaces in a TopoDS_Shape
  * @return vector of BSpline Surfaces
  */
-vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,bool verbose = true);
+vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,int verboseLevel = 0);
 
 
 /**
