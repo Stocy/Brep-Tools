@@ -354,9 +354,9 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, TaperP
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3 &ax,
-                   function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, Standard_Integer discr) {
+                   function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int discr, int verboseLevel) {
 
-    cout << "function " << __FUNCTION__ << endl;
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
     vector<Standard_Real> dists(discr + 1);
     vector<gp_Pnt> discr_pnts(discr + 1);
 
@@ -376,7 +376,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
     Handle(Geom_Geometry) tmp_geom = bSplineCurve->Copy();
     Handle(Geom_BSplineCurve) newCurve = Handle(Geom_BSplineCurve)::DownCast(tmp_geom);
-    TaperBSC(newCurve, ax, taperFunc, taperType);
+    TaperBSC(newCurve, ax, taperFunc, taperType, verboseLevel-1);
 
     double sphereRadius(0.5);
     for (auto p: bSplineCurve->Poles()) {
@@ -395,9 +395,9 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
     for (int i = 0; i <= discr; ++i) {
         Standard_Real U = (Standard_Real) i / discr;
-        cout << U << endl;
+        if (verboseLevel>0) cout << U << endl;
         gp_Pnt pnt(bSplineCurve->Value(U)), pnt_on_curve;
-        TaperPoint(pnt, ax, taperFunc, taperType, false);
+        TaperPoint(pnt, ax, taperFunc, taperType, verboseLevel-1);
         discr_pnts[i] = pnt;
         //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,newCurve);
         //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
@@ -409,7 +409,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
         //if (!pnt.IsEqual(pnt_on_curve,0)) builder.Add(compound, makeEdge.Shape());
         dst = pnt_on_curve.Distance(pnt);
         dists[i] = dst;
-        cout << "dst to tapered bSpline : " << dst << endl;
+        if (verboseLevel>0) cout << "dst to tapered bSpline : " << dst << endl;
 
     }
     Standard_Real min(dists[0]), max(min), sum(0);
@@ -421,10 +421,10 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
 
     for (int i = 1; i <= bSplineCurve->NbKnots(); ++i) {
         Standard_Real U = bSplineCurve->Knot(i);
-        cout << U << endl;
+        if (verboseLevel>0) cout << U << endl;
     }
-    cout << bSplineCurve->FirstParameter() << endl;
-    cout << bSplineCurve->LastParameter() << endl;
+    if (verboseLevel>0) cout << bSplineCurve->FirstParameter() << endl;
+    if (verboseLevel>0) cout << bSplineCurve->LastParameter() << endl;
 
     for (int i = 0; i < discr; ++i) {
         BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
@@ -433,7 +433,7 @@ void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, g
     }
 
     ExportSTEP(compound, "bsc_verif.step", "mm", 0);
-    cout << "min : " << min << ", max : " << max << " average : " << sum / discr << endl;
+    if (verboseLevel>0) cout << "min : " << min << ", max : " << max << " average : " << sum / discr << endl;
 }
 
 void TaperBSC_eval(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, TaperParams taperParams,

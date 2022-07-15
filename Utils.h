@@ -145,9 +145,9 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperPa
  * @param taperFunc
  * @param discr
  */
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, Standard_Integer discr = 200);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int discr = 200, int verboseLevel = 0);
 
-void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, Standard_Integer discr = 200);
+void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, Standard_Integer discr = 200, int verboseLevel = 0);
 /**
  * Taper a BSpline Surface (BSS)
  * @param bSplineSurface
