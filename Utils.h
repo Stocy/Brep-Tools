@@ -23,6 +23,9 @@
 #include <filesystem>
 #include <Interface_Static.hxx>
 #include <functional>
+#define degToRad(angleInDegrees) ((angleInDegrees) * M_PI / 180.0)
+#define radToDeg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
+#define _USE_MATH_DEFINES
 
 using namespace std;
 
@@ -69,7 +72,12 @@ vector<Handle(Geom_BSplineSurface)> bSS(TopoDS_Shape&,bool verbose = true);
  * Taper functions namespace
  */
 namespace TaperFunctions{
-    // create a taper function with an angle
+    // create a taper function with an angle TODO not correct yet
+    inline auto linear = [](Standard_Real a) {
+        function<double(double)> taperFunc = [a](Standard_Real h){ return 1.0 + h * a; };
+        return taperFunc;
+    };
+
     inline auto angle = [](Standard_Real angle) {
         double x(cos(angle)), y(sin(angle)), factor(y/x);
         function<double(double)> taperFunc = [factor](Standard_Real h){ return h * factor; };
@@ -81,7 +89,7 @@ namespace TaperFunctions{
         Standard_Real factor = ((distance + abs(displacement))/distance) - 1.0;
         if(displacement < 0) factor = -factor;
         function<double(double)> taperFunc = [factor, height](Standard_Real h){
-            cout << "h " << h << ", H " << height <<endl;
+            //cout << "h " << h << ", H " << height <<endl;
             return 1.0 + (factor * (h/height)); };
         return taperFunc;
     };
@@ -107,11 +115,7 @@ struct TaperParams{
 /**
  * Taper a point, according to a single argument function.
  * the argument given to the function is the height of the point in axis coordinate system
- * if shear is set to true, every point at the same height will displaced the same amount :
- * this mean the result of the taper function is the *size* of the displacement vector
- * which is then used to translate the original point accordingly.
- * Otherwise the result of the taper function is used as a factor to scale the displacement vector,
- * the height point of the point in axis is then displaced by the displacement vector.
+ * TAPER_TYPE used should be SCALE most of the time but TRANSLATE can be used for radial shear
  * @param point
  * @param ax
  * @param taperFunc
@@ -170,5 +174,6 @@ TopoDS_Compound
 TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose = false);
 
 void setColor(TopoDS_Shape);
+
 #endif //OCC_TEST_UTILS_H
 

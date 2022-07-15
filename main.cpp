@@ -69,10 +69,15 @@ int main(int argc, char **argv) {
         TaperParams displacementTaper{
             op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -4.0)
         };
-        //evaluate taper
-        TaperBSC_eval(a_bSC, displacementTaper,200);
 
-        //auto a = TaperShape(cube,op_axis,func_test);
+        TaperParams linear{
+            op_axis,SCALE,TaperFunctions::linear(-0.01)
+        };
+        //evaluate taper
+        //TaperBSC_eval(a_bSC, linear,200);
+
+        TaperShape(cube,displacementTaper);
+        //cout << (a.IsNull()?"y":"n") << endl;
         //ExportSTEP(a,"testWhole.step","mm");
     }
 
@@ -93,33 +98,5 @@ int main(int argc, char **argv) {
 
 
     //-------------------------BASICALLY TRASH----------------------------//
-
-    //TaperPnt_CADStyle(a_bSC, op_axis, -numbers::pi / 100, true);
-    //TaperPnt_CADStyle(a_bSS, op_axis, -numbers::pi / 100, true);
-
-
-    /*
-    TopoDS_Compound pts;
-    BRep_Builder builder;
-    builder.MakeCompound(pts);
-    for (gp_Pnt &pole : a_bSC->Poles()){
-        TaperPnt_CADStyle(pole,op_axis, [](auto r){return 0.05*r;},1,true);
-        BRepBuilderAPI_MakeVertex vertexBuilder = BRepBuilderAPI_MakeVertex(pole);
-        TopoDS_Shape vertex = vertexBuilder.Vertex();
-        builder.Add(pts, vertex);
-    }
-
-    ExportSTEP(pts,"pnts_bsc.step","mm");
-     */
-
-
-
-
-    //exporting result
-    //BRepBuilderAPI_MakeEdge apiMakeEdge(a_bSC);
-    //BRepBuilderAPI_MakeFace apiMakeFace;
-    //apiMakeFace.Init(a_bSS,true,0.00001);
-    //ExportSTEP(apiMakeEdge.Shape(), "out_bsc.step", "mm");
-    //ExportSTEP(apiMakeFace.Shape(), "out_bss.step", "mm");
 
 }
