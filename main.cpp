@@ -74,29 +74,33 @@ int main(int argc, char **argv) {
             op_axis,SCALE,TaperFunctions::linear(-0.01)
         };
         //evaluate taper
-        //TaperBSC_eval(a_bSC, linear,200);
+        TaperBSC_eval(a_bSC, linear,1000);
 
-        TaperShape(cube,displacementTaper);
+        //TaperShape(cube,displacementTaper);
         //cout << (a.IsNull()?"y":"n") << endl;
         //ExportSTEP(a,"testWhole.step","mm");
     }
 
 
-    //CODE EXAMPLES ...
 
-    //read step file
-    //TopoDS_Shape t_curve = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
-
-    //compute stats
-    //Stats_TopoShapes(t_curve);
-
-    //compute folder stats
-    //StepFolder_Stats();
-
-    // export TopoDS to step file
-    //ExportSTEP(t_curve, "out.step", "mm");
 
 
     //-------------------------BASICALLY TRASH----------------------------//
 
+}
+
+void codeExamples(){
+    //CODE EXAMPLES ...
+
+    //read step file
+    TopoDS_Shape t_curve = ReadStep("/home/tom/Documents/stage_can/occ_test/Cone_surf.stp");
+
+    //compute stats
+    Stats_TopoShapes(t_curve);
+
+    //compute folder stats
+    StepFolder_Stats();
+
+    // export TopoDS to step file
+    ExportSTEP(t_curve, "out.step", "mm");
 }

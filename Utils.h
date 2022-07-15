@@ -121,9 +121,9 @@ struct TaperParams{
  * @param taperFunc
  * @param verbose
  */
-void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = true);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
-void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, bool verbose = true);
+void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, int verboseLevel = 0);
 
 /**
  * Taper a BSpline Curve (BSC), simply displace the poles of the BSpline with the help of TaperPoint using func
@@ -132,9 +132,9 @@ void TaperPoint(gp_Pnt &point, gp_Ax3 &ax, TaperParams taperParams, bool verbose
  * @param taperFunc
  * @param verbose
  */
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
-void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, bool verbose = false);
+void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams taperParams, int verboseLevel = 0);
 
 /**
  * Evaluate a Taper on BSpline Curve against the tapered discretization,
@@ -155,9 +155,9 @@ void TaperBSC_eval(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams ta
  * @param taperFunc
  * @param verbose
  */
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
-void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams taperParams, bool verbose = false);
+void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams taperParams, int verboseLevel = 0);
 
 /**
  * Taper a shape by tapering its sub components
@@ -168,10 +168,10 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams tap
  * @param verbose
  */
 TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, bool verbose = false);
+TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, TaperParams taperParams, bool verbose = false);
+TaperShape(TopoDS_Shape &shape, TaperParams taperParams, int verboseLevel = 0);
 
 void setColor(TopoDS_Shape);
 
