@@ -29,6 +29,7 @@
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include "GeomConvert_ApproxSurface.hxx"
 #include "GeomConvert_ApproxCurve.hxx"
+#include <BRepTools_WireExplorer.hxx>
 
 #define TOL 0.0001
 
@@ -460,47 +461,81 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams tap
     TaperBSS(bSplineSurface, taperParams.axis, taperParams.func, taperParams.type, verboseLevel);
 }
 
-TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc,
-           TAPER_TYPE taperType, int verboseLevel) {
+
+void TaperEdge(TopoDS_Edge &edge, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel) {
     if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+
+    GeomAbs_Shape absShape = GeomAbs_C2;
+    Standard_Real first(0.0), last(1.0);
+
+    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge,first,last);
+    GeomConvert_ApproxCurve approxCurve(curve,TOL,absShape,10,10);
+    Handle(Geom_BSplineCurve) bsCurve = approxCurve.Curve();
+    TaperBSC(bsCurve, ax, taperFunc, taperType, verboseLevel - 1);
+
+    BRepBuilderAPI_MakeEdge makeEdge(bsCurve);
+    edge = makeEdge.Edge();
+}
+
+void TaperEdge(TopoDS_Edge &edge, TaperParams taperParams, int verboseLevel) {
+    TaperEdge(edge,taperParams.axis,taperParams.func,taperParams.type,verboseLevel);
+}
+
+void TaperWire(TopoDS_Wire &wire, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType,
+               int verboseLevel) {
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+
+    BRepTools_WireExplorer wireExplorer(wire);
+    BRepBuilderAPI_MakeWire makeWire;
+    while(wireExplorer.More()){
+        TopoDS_Edge edge = TopoDS::Edge(wireExplorer.Current());
+        TaperEdge(edge,ax,taperFunc,taperType,verboseLevel-1);
+        makeWire.Add(edge);
+        wireExplorer.Next();
+    }
+    if (makeWire.IsDone()) wire = makeWire.Wire();
+}
+
+void TaperFace(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType,
+               int verboseLevel) {
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+
+    GeomAbs_Shape absShape = GeomAbs_C2;
+
+    const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(face));
+    GeomConvert_ApproxSurface approxSurface(surface,TOL,absShape,absShape,10,10,10,1);
+    Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
+    TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
+
+    ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
+    TopoDS_Compound wires = freeBounds.GetClosedWires();
+    TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
+    TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current())), newWire;
+    TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
+
+    BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface, wire);
+    face = makeFace.Face();
+
+}
+
+void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc,
+                TAPER_TYPE taperType, int verboseLevel) {
+    if (verboseLevel>0) cout << "function " << __FUNCTION__ << endl;
+
     TopoDS_Compound compound;
     BRep_Builder builder;
     builder.MakeCompound(compound);
 
     for (TopExp_Explorer faceExplorer(shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next()) {
-
-        const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(faceExplorer.Current()));
-        GeomAbs_Shape absShape = GeomAbs_C2;
-        GeomConvert_ApproxSurface approxSurface(surface,TOL,absShape,absShape,10,10,10,1);
-        if (approxSurface.HasResult() && verboseLevel>0) cout << "there is aprox result" << endl;
-        Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
-        TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
-        if (verboseLevel>0) cout << "BSS with "<< bsSurface->NbVPoles() << " poles" << endl;
-        ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(faceExplorer.Current());
-        TopoDS_Compound wires = freeBounds.GetClosedWires();
-        TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
-        TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current())), newWire;
-        BRepBuilderAPI_MakeWire makeWire;
-        for(TopExp_Explorer explorerEdges(wire, TopAbs_EDGE); explorerEdges.More(); explorerWire.Next()){
-            Standard_Real first(0.0), last(1.0);
-            TopoDS_Edge edge = TopoDS::Edge(explorerEdges.Current());
-            Handle(Geom_Curve) curve = BRep_Tool::Curve(edge,first,last);
-            GeomConvert_ApproxCurve approxCurve(curve,TOL,absShape,10,10);
-            Handle(Geom_BSplineCurve) bscurve = approxCurve.Curve();
-            TaperBSC(bscurve,ax,taperFunc,taperType,verboseLevel-1);
-            makeWire.Add(BRepBuilderAPI_MakeEdge(bscurve).Edge());
-        }
-
-        BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface, makeWire.Wire());
-        builder.Add(compound,makeFace.Shape());
+        TopoDS_Face face = TopoDS::Face(faceExplorer.Current());
+        TaperFace(face,ax,taperFunc,taperType,verboseLevel-1);
+        builder.Add(compound,face);
     }
 
-    ExportSTEP(compound, "test.step", "mm", 0);
-    return compound;
+    shape = compound;
 }
 
-TopoDS_Compound TaperShape(TopoDS_Shape &shape, TaperParams taperParams, int verboseLevel) {
+void TaperShape(TopoDS_Shape &shape, TaperParams taperParams, int verboseLevel) {
     TaperShape(shape, taperParams.axis, taperParams.func, taperParams.type, verboseLevel);
 }
 

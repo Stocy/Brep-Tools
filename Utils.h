@@ -159,6 +159,18 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, fun
 
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams taperParams, int verboseLevel = 0);
 
+void TaperEdge(TopoDS_Edge &edge,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+
+void TaperEdge(TopoDS_Edge &edge,TaperParams taperParams, int verboseLevel = 0);
+
+void TaperWire(TopoDS_Wire &wire,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+
+void TaperWire(TopoDS_Wire &wire,TaperParams taperParams, int verboseLevel = 0);
+
+void TaperFace(TopoDS_Face &face,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+
+void TaperFace(TopoDS_Face &face,TaperParams taperParams, int verboseLevel = 0);
+
 /**
  * Taper a shape by tapering its sub components
  * @param shape
@@ -167,11 +179,11 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams tap
  * @param shear
  * @param verbose
  */
-TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
-TopoDS_Compound
-TaperShape(TopoDS_Shape &shape, TaperParams taperParams, int verboseLevel = 0);
+void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+
+
+void TaperShape(TopoDS_Shape &shape, TaperParams taperParams, int verboseLevel = 0);
 
 void setColor(TopoDS_Shape);
 

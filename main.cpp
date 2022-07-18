@@ -74,11 +74,13 @@ int main(int argc, char **argv) {
             op_axis,SCALE,TaperFunctions::linear(-0.01)
         };
         //evaluate taper
-        TaperBSC_eval(a_bSC, linear,1000);
 
-        //TaperShape(cube,displacementTaper);
+        //TaperBSC_eval(a_bSC, linear,1000);
+
+        //ExportSTEP(cube,"cube.step","mm");
+        TaperShape(cube,displacementTaper,3);
         //cout << (a.IsNull()?"y":"n") << endl;
-        //ExportSTEP(a,"testWhole.step","mm");
+        ExportSTEP(cube,"testCube.step","mm");
     }
 
 
