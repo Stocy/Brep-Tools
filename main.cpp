@@ -30,6 +30,8 @@
 #include "TopoDS_Vertex.hxx"
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <GeomConvert_ApproxSurface.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
 //#include <occutils/ExtendedSTEP.hxx>
 //#include <occutils/Primitive.hxx>
 
@@ -41,6 +43,7 @@ int main(int argc, char **argv) {
     TopoDS_Shape t_curve = ReadStep(string(SRCDIR) + "/bs_curve_rational.step");
     TopoDS_Shape t_surf = ReadStep(string(SRCDIR) + "/bs_surf.step");
     TopoDS_Shape cube = BRepPrimAPI_MakeBox(gp_Pnt(-10,-10,-10),gp_Pnt(10,10,10));
+    TopoDS_Shape sphere = BRepPrimAPI_MakeSphere(10);
     //Stats_TopoShapes(t_curve);
     //Stats_TopoShapes(t_surf);
     vector<Handle(Geom_BSplineCurve) > bScs = bSC(t_curve, false);
@@ -67,27 +70,36 @@ int main(int argc, char **argv) {
         //more function in TaperFunctions namespace
 
         TaperParams displacementTaper{
-            op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -4.0)
+            op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -10)
         };
 
         TaperParams linear{
-            op_axis,SCALE,TaperFunctions::linear(-0.01)
+            op_axis,SCALE,TaperFunctions::linear(-0.1)
         };
         //evaluate taper
 
-        //TaperBSC_eval(a_bSC, linear,1000);
+        TaperBSC_eval(a_bSC, displacementTaper,1000,0);
 
         //ExportSTEP(cube,"cube.step","mm");
-        TaperShape(cube,displacementTaper,3);
+        //ExportSTEP(cube,"testCube.step","mm");
+        //cout << "before" << endl;
+        //Stats_TopoShapes(cube);
+
+        //BRepBuilderAPI_MakeEdge makeEdge(a_bSC);
+        //TopoDS_Edge edge = makeEdge.Edge();
+        //TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge);
+        //TaperEdge(edge,displacementTaper,0);
+        //ExportSTEP(edge,"edge.step","mm");
+
+        //TaperWire(wire,displacementTaper,0);
+        //ExportSTEP(edge,"wire.step","mm");
+
+        //TaperShape(cube,linear,3);
+        //cout << "after" << endl;
+        //Stats_TopoShapes(cube);
         //cout << (a.IsNull()?"y":"n") << endl;
-        ExportSTEP(cube,"testCube.step","mm");
+        //ExportSTEP(cube,"testCube.step","mm");
     }
-
-
-
-
-
-    //-------------------------BASICALLY TRASH----------------------------//
 
 }
 
