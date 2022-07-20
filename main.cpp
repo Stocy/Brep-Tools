@@ -40,9 +40,13 @@ using namespace std;
 int main(int argc, char **argv) {
 
     //Loading bspline from step file
+    string stepFolder("/step_files");
     TopoDS_Shape t_curve = ReadStep(string(SRCDIR) + "/bs_curve_rational.step");
     TopoDS_Shape t_surf = ReadStep(string(SRCDIR) + "/bs_surf.step");
     TopoDS_Shape t_face = ReadStep(string(SRCDIR) + "/test_wire_closed.step");
+    TopoDS_Shape tol_test = ReadStep(string(SRCDIR) +stepFolder+ "/tol.step");
+//    TopoDS_Shape cone_surf = ReadStep(string(SRCDIR) +stepFolder+ "/Cones_surf.stp");
+    TopoDS_Shape pyramid = ReadStep(string(SRCDIR) +stepFolder+ "/Pyramid.stp");
     TopExp_Explorer explorer(t_face,TopAbs_WIRE);
     TopoDS_Wire wire = TopoDS::Wire(explorer.Current());
     TopoDS_Shape cube = BRepPrimAPI_MakeBox(gp_Pnt(-10,-10,-10),gp_Pnt(10,10,10));
@@ -77,7 +81,7 @@ int main(int argc, char **argv) {
         };
 
         TaperParams linear{
-            op_axis,SCALE,TaperFunctions::linear(-0.1)
+            op_axis,SCALE,TaperFunctions::linear(-0.01)
         };
         //evaluate taper
 
@@ -103,14 +107,23 @@ int main(int argc, char **argv) {
 
         TopoDS_Edge bs_edge = TopoDS::Edge(edgeExpl.Current());
         TaperEdge(bs_edge,displacementTaper,3);
-//        TaperWire(wire,linear,3);
+        TaperWire(wire,displacementTaper,3);
         ExportSTEP(bs_edge,"bsEdge.step","mm");
-//        TaperShape(cube,linear,3);
+        ExportSTEP(wire,"tapered_wire.step","mm");
+        TaperShape(cube,linear,3);
+        TaperShape(sphere,linear,3);
+        TaperShape(tol_test,linear,3);
+        //TaperShape(cone_surf,linear,3);
+        TaperShape(pyramid,linear,3);
         //cout << "after" << endl;
         //Stats_TopoShapes(cube);
         //cout << (a.IsNull()?"y":"n") << endl;
         //ExportSTEP(topoDsCompound,"wire_test.step","mm");
-//       ExportSTEP(cube,"testCube.step","mm");
+       ExportSTEP(cube,"testCube.step","mm");
+       ExportSTEP(sphere,"testSphere.step","mm");
+        ExportSTEP(tol_test,"tolTest.step","mm");
+        ExportSTEP(pyramid,"pyramid.step","mm");
+        //ExportSTEP(cone_surf,"coneSurf.step","mm");
     }
 
 }

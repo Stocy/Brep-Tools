@@ -39,7 +39,8 @@
 #include "Adaptor3d_Curve.hxx"
 #include <GeomAdaptor_HCurve.hxx>
 #include <GeomLib.hxx>
-
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepAdaptor_HSurface.hxx>
 
 
 #define TOL 0.0001
@@ -619,17 +620,20 @@ void TaperFace(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Re
     BRep_Builder builder;
     builder.MakeWire(compound);
 
-    const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(face));
-    GeomConvert_ApproxSurface approxSurface(surface,TOL,absShape,absShape,10,10,10,1);
+    Handle(BRepAdaptor_HSurface) hSurface = new BRepAdaptor_HSurface(face);
+//    const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(face));
+
+    GeomConvert_ApproxSurface approxSurface(hSurface,TOL,absShape,absShape,10,10,10,1);
     Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
     TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
 
-    ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
+/*
+ * >TODO corriger en utilisant le outer wire
+ * ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
     const TopoDS_Compound& wires = freeBounds.GetClosedWires();
-    for(TopExp_Explorer explorerWire(wires, TopAbs_WIRE);explorerWire.More();explorerWire.Next()){
-        TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
-        TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
-    }
+    TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
+    TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
+    TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);*/
 
     BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface,TOL);
     face = makeFace.Face();
