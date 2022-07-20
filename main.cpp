@@ -42,15 +42,18 @@ int main(int argc, char **argv) {
     //Loading bspline from step file
     TopoDS_Shape t_curve = ReadStep(string(SRCDIR) + "/bs_curve_rational.step");
     TopoDS_Shape t_surf = ReadStep(string(SRCDIR) + "/bs_surf.step");
+    TopoDS_Shape t_face = ReadStep(string(SRCDIR) + "/test_wire_closed.step");
+    TopExp_Explorer explorer(t_face,TopAbs_WIRE);
+    TopoDS_Wire wire = TopoDS::Wire(explorer.Current());
     TopoDS_Shape cube = BRepPrimAPI_MakeBox(gp_Pnt(-10,-10,-10),gp_Pnt(10,10,10));
     TopoDS_Shape sphere = BRepPrimAPI_MakeSphere(10);
     //Stats_TopoShapes(t_curve);
     //Stats_TopoShapes(t_surf);
-    vector<Handle(Geom_BSplineCurve) > bScs = bSC(t_curve, false);
-    vector<Handle(Geom_BSplineSurface) > bSss = bSS(t_surf, false);
+    vector<Handle(Geom_BSplineCurve)> bScs = bSC(t_curve, false);
+    vector<Handle(Geom_BSplineSurface)> bSss = bSS(t_surf, false);
 
     Handle(Geom_BSplineCurve) a_bSC(bScs.at(0));
-    Handle(Geom_BSplineSurface) a_bfSS(bSS(t_surf).at(0));
+    Handle(Geom_BSplineSurface) a_bSS(bSS(t_surf).at(0));
 
     cout << "bs is " << (a_bSC.IsNull() ? "null" : "not null") << endl;
 
@@ -70,7 +73,7 @@ int main(int argc, char **argv) {
         //more function in TaperFunctions namespace
 
         TaperParams displacementTaper{
-            op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -10)
+            op_axis,SCALE,TaperFunctions::displacement(20.0, 20.0, -4)
         };
 
         TaperParams linear{
@@ -78,7 +81,8 @@ int main(int argc, char **argv) {
         };
         //evaluate taper
 
-        TaperBSC_eval(a_bSC, displacementTaper,1000,0);
+//        TaperBSC_eval(a_bSC, displacementTaper,1000,0);
+//        TaperBSS_eval(a_bSS, linear,200,1);
 
         //ExportSTEP(cube,"cube.step","mm");
         //ExportSTEP(cube,"testCube.step","mm");
@@ -94,11 +98,19 @@ int main(int argc, char **argv) {
         //TaperWire(wire,displacementTaper,0);
         //ExportSTEP(edge,"wire.step","mm");
 
-        //TaperShape(cube,linear,3);
+        //tBuilder.MakeCompound(topoDsCompound);
+        TopExp_Explorer edgeExpl(t_curve,TopAbs_EDGE);
+
+        TopoDS_Edge bs_edge = TopoDS::Edge(edgeExpl.Current());
+        TaperEdge(bs_edge,displacementTaper,3);
+//        TaperWire(wire,linear,3);
+        ExportSTEP(bs_edge,"bsEdge.step","mm");
+//        TaperShape(cube,linear,3);
         //cout << "after" << endl;
         //Stats_TopoShapes(cube);
         //cout << (a.IsNull()?"y":"n") << endl;
-        //ExportSTEP(cube,"testCube.step","mm");
+        //ExportSTEP(topoDsCompound,"wire_test.step","mm");
+//       ExportSTEP(cube,"testCube.step","mm");
     }
 
 }

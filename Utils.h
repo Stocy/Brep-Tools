@@ -161,6 +161,10 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, fun
 
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams &taperParams, int verboseLevel = 0);
 
+void TaperBSS_eval(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int discr = 200, int verboseLevel = 0);
+
+void TaperBSS_eval(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams &taperParams, Standard_Integer discr = 200, int verboseLevel = 0);
+
 void TaperEdge(TopoDS_Edge &edge,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 void TaperEdge(TopoDS_Edge &edge,TaperParams &taperParams, int verboseLevel = 0);

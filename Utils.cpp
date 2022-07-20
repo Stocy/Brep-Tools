@@ -30,7 +30,17 @@
 #include "GeomConvert_ApproxSurface.hxx"
 #include "GeomConvert_ApproxCurve.hxx"
 #include <BRepTools_WireExplorer.hxx>
+#include <ShapeAnalysis_Surface.hxx>
+#include <ShapeAnalysis_Edge.hxx>
+#include <BRepAdaptor_HCurve.hxx>
+#include <BRepAdaptor_HCompCurve.hxx>
 #include "BRepAdaptor_CompCurve.hxx"
+#include <Adaptor3d_HCurve.hxx>
+#include "Adaptor3d_Curve.hxx"
+#include <GeomAdaptor_HCurve.hxx>
+#include <GeomLib.hxx>
+
+
 
 #define TOL 0.0001
 
@@ -225,7 +235,7 @@ void ExportSTEP(const TopoDS_Shape &shape, const string &filename, const string 
     IFSelect_ReturnStatus writeStatus = writer.Write(filename.c_str());
     // Return previous locale
     if (writeStatus != IFSelect_RetDone) {
-        throw std::logic_error("Error while writing transferred shape to STEP file");
+        throw std::logic_error("Error while writing transferred shape to STEP file " + to_string(writeStatus));
     }
 }
 
@@ -331,24 +341,16 @@ void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, gp_Ax3
               int verboseLevel) {
 
     if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
-    TColgp_Array1OfPnt poles = bSplineCurve->Poles(), new_poles(1, poles.Size());
+    TColgp_Array1OfPnt poles = bSplineCurve->Poles();
 
     //displacing every control points (aka poles)
-    Standard_Integer count(1);
+    Standard_Integer index(1);
     for (auto current_pole: poles) {
         gp_Pnt new_pole(current_pole);
         TaperPoint(new_pole, ax, taperFunc, taperType, verboseLevel-1);
-        new_poles[count] = new_pole;
-
-        count++;
+        bSplineCurve->SetPole(index, new_pole);
+        index++;
     }
-    count--;
-
-    Geom_BSplineCurve res(*bSplineCurve);
-    for (int i = 1; i <= count; ++i) {
-        res.SetPole(i, new_poles[i]);
-    }
-    *bSplineCurve = res;
 }
 
 void TaperBSC(const opencascade::handle<Geom_BSplineCurve> &bSplineCurve, TaperParams &taperParams, int verboseLevel) {
@@ -464,14 +466,103 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams &ta
     TaperBSS(bSplineSurface, taperParams.axis, taperParams.func, taperParams.type, verboseLevel);
 }
 
+void TaperBSS_eval(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, gp_Ax3 &ax,
+                   function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int discr,
+                   int verboseLevel) {
+    if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
+    vector<Standard_Real> dists(discr + 1);
+    vector<gp_Pnt> discr_pnts(discr + 1);
+
+    TopoDS_Compound compound;
+    BRep_Builder builder;
+    builder.MakeCompound(compound);
+
+    //adding operation axes adges, for better visualisation
+    BRepBuilderAPI_MakeEdge *originAxes[3] = {
+            new BRepBuilderAPI_MakeEdge(ax.Location(), ax.Location().Translated(ax.XDirection())),
+            new BRepBuilderAPI_MakeEdge(ax.Location(), ax.Location().Translated(ax.YDirection())),
+            new BRepBuilderAPI_MakeEdge(ax.Location(), ax.Location().Translated(((gp_Vec) ax.Direction()).Scaled(3)))
+    };
+    for (auto e: originAxes) {
+        builder.Add(compound, e->Shape());
+    }
+
+    Handle(Geom_Geometry) tmp_geom = bSplineSurface->Copy();
+    Handle(Geom_BSplineSurface) newSurf = Handle(Geom_BSplineSurface)::DownCast(tmp_geom);
+    TaperBSS(newSurf, ax, taperFunc, taperType, verboseLevel - 1);
+
+    double sphereRadius(0.5);
+    for(int i = 1; i <= bSplineSurface->NbUPoles(); i++){
+        for(int  j = 1; j <= bSplineSurface->NbVPoles(); j++){
+            auto p = bSplineSurface->Pole(i,j);
+            BRepPrimAPI_MakeSphere makeSphere(p, 0.5/2);
+            builder.Add(compound, makeSphere.Shape());
+        }
+    }
+    for(int i = 1; i <= newSurf->NbUPoles(); i++){
+        for(int  j = 1; j <= newSurf->NbVPoles(); j++){
+            auto p = newSurf->Pole(i,j);
+            BRepPrimAPI_MakeSphere makeSphere(p, 0.5);
+            builder.Add(compound, makeSphere.Shape());
+        }
+    }
+
+    BRepBuilderAPI_MakeFace apiMakeFace(newSurf, TOL);
+    builder.Add(compound, apiMakeFace.Shape());
+    BRepBuilderAPI_MakeFace apiMakeFaceOrig(bSplineSurface,TOL);
+    builder.Add(compound, apiMakeFaceOrig.Shape());
+
+    for (int i = 0; i <= discr; ++i) {
+        for (int j = 0; j <= discr; ++j){
+
+            Standard_Real U = (Standard_Real) i / discr;
+            Standard_Real V = (Standard_Real) i / discr;
+            if (verboseLevel>0) cout << U << endl;
+            gp_Pnt pnt(bSplineSurface->Value(U,V)), pnt_on_curve;
+            TaperPoint(pnt, ax, taperFunc, taperType, verboseLevel-1);
+            discr_pnts[i] = pnt;
+            //GeomAPI_ProjectPointOnCurve geomApiProjectPointOnCurve(pnt_on_curve ,newSurf);
+            //Standard_Real dst = geomApiProjectPointOnCurve.LowerDistance();
+            //ShapeAnalysis_Curve shapeAnalysisCurve;
+            ShapeAnalysis_Surface shapeAnalysis(bSplineSurface);
+            Standard_Real dst = 0.0, param(0.0);
+
+            gp_Pnt2d neighb, res;
+            shapeAnalysis.ProjectDegenerated(pnt,TOL,neighb,res);
+            pnt_on_curve = bSplineSurface->Value(res.X(),res.Y());
+            BRepBuilderAPI_MakeEdge makeEdge(pnt, pnt_on_curve);
+            //if (!pnt.IsEqual(pnt_on_curve,0)) builder.Add(compound, makeEdge.Shape());
+            dst = pnt_on_curve.Distance(pnt);
+            dists[i] = dst;
+            if (verboseLevel>0) cout << "dst to tapered bSpline : " << dst << endl;
+        }
+    }
+    Standard_Real min(dists[0]), max(min), sum(0);
+    for (auto d: dists) {
+        if (d > max) max = d;
+        if (d < min) min = d;
+        sum += d;
+    }
+
+
+    for (int i = 0; i < discr; ++i) {
+        BRepBuilderAPI_MakeVertex vertex = BRepBuilderAPI_MakeVertex(discr_pnts[i]);
+        builder.Add(compound, vertex.Vertex());
+        BRepBuilderAPI_MakeEdge makeEdge(discr_pnts[i], discr_pnts[i + 1]);
+    }
+
+    ExportSTEP(compound, "bss_verif.step", "mm", 0);
+    if (verboseLevel>0) cout << "min : " << min << ", max : " << max << " average : " << sum / discr << endl;
+
+}
+
 void TaperEdge(TopoDS_Edge &edge, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel) {
     if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
 
-    GeomAbs_Shape absShape = GeomAbs_C2;
-    Standard_Real first(0.0), last(1.0);
-
-    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge,first,last);
-    GeomConvert_ApproxCurve approxCurve(curve,TOL,absShape,10,10);
+    GeomAbs_Shape absShape = GeomAbs_C1;
+    Handle(BRepAdaptor_HCurve) hCurve = new BRepAdaptor_HCurve(edge);
+//    cout << "f " << first << "l " << last << endl;
+    GeomConvert_ApproxCurve approxCurve(hCurve,TOL,absShape,15,15);
     Handle(Geom_BSplineCurve) bsCurve = approxCurve.Curve();
     TaperBSC(bsCurve, ax, taperFunc, taperType, verboseLevel - 1);
 
@@ -487,15 +578,18 @@ void TaperWire(TopoDS_Wire &wire, gp_Ax3 &ax, function<Standard_Real(Standard_Re
                int verboseLevel) {
     if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
 
+    TopTools_ListOfShape edges;
+
     BRepBuilderAPI_MakeWire makeWire;
     for (BRepTools_WireExplorer wireExplorer(wire);wireExplorer.More();wireExplorer.Next()){
         TopoDS_Edge edge = TopoDS::Edge(wireExplorer.Current());
         TaperEdge(edge,ax,taperFunc,taperType,verboseLevel-1);
-        makeWire.Add(edge);
+        if(!edge.IsNull()) edges.Append(edge);
     }
-    makeWire.Build();
+//    ExportSTEP(compound, "exwire.step", "mm");
+    makeWire.Add(edges);
+    cout << "err " <<makeWire.Error() << endl;
     wire = makeWire.Wire();
-
 
     /*
 
@@ -531,14 +625,13 @@ void TaperFace(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Re
     TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
 
     ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
-    TopoDS_Compound wires = freeBounds.GetClosedWires();
+    const TopoDS_Compound& wires = freeBounds.GetClosedWires();
     for(TopExp_Explorer explorerWire(wires, TopAbs_WIRE);explorerWire.More();explorerWire.Next()){
         TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
         TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
-        builder.Add(topoDsCompound,wire);
     }
 
-    BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface,compound);
+    BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface,TOL);
     face = makeFace.Face();
     //ExportSTEP(compound,"wires.step","mm");
     //face = TopoDS::Face(compound);
@@ -559,7 +652,6 @@ void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard
         TaperFace(face,ax,taperFunc,taperType,verboseLevel-1);
         builder.Add(compound,face);
     }
-    ExportSTEP(topoDsCompound,"cubeC.step","mm");
     shape = compound;
 
 }
@@ -573,5 +665,11 @@ void setColor(TopoDS_Shape shape) {
     shapeTool->Init();
     shapeTool->AddShape(shape);
     // TODO setColor(shape);
+
+}
+
+void TaperBSS_eval(const opencascade::handle<Geom_BSplineSurface> &bSplineSurface, TaperParams &taperParams,
+                   Standard_Integer discr, int verboseLevel) {
+    TaperBSS_eval(bSplineSurface,taperParams.axis,taperParams.func,taperParams.type,discr,verboseLevel);
 
 }
