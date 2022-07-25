@@ -72,13 +72,14 @@ static const char *faceContinuity[] = {
 map<string, int> edgeType_count, faceType_count;
 
 /**
- * Compute stats for a TopoDS shape, bool to turn verbose on or off
+ * Compute stats for a TopoDS shape, verboseLevel to turn verbose on or off
  * @param shape the shape to gather stat from
  */
 void Stats_TopoShapes(const TopoDS_Shape &shape, int verboseLevel) {
+    if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
+
     Standard_Integer count(0);
     std::vector<Geom_Surface> surfs;
-    if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
     if (verboseLevel>0) cout << "--------------- COUNT OF SHAPES OF != TYPES : ---------------" << endl;
     if (verboseLevel>0) cout << "/////////////////////////////////////////////////////////////" << endl;
     for (int shape_enum_value = 0; shape_enum_value != TopAbs_SHAPE; shape_enum_value++) {

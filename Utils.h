@@ -141,7 +141,7 @@ void TaperBSC(const Handle(Geom_BSplineCurve) &bSplineCurve, TaperParams &taperP
 /**
  * Evaluate a Taper on BSpline Curve against the tapered discretization,
  * export a step file to visualize
- * output min, max aswell as average tolerance
+ * output min, max as well as average tolerance
  * @param bSplineCurve
  * @param ax
  * @param taperFunc
@@ -161,24 +161,59 @@ void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, fun
 
 void TaperBSS(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams &taperParams, int verboseLevel = 0);
 
+/**
+ * Evaluate a Taper on BSpline Surface against the tapered discretization,
+ * export a step file to visualize
+ * output min, max as well as average tolerance
+ * @param bSplineSurface 
+ * @param ax 
+ * @param taperFunc 
+ * @param taperType 
+ * @param discr 
+ * @param verboseLevel 
+ */
 void TaperBSS_eval(const Handle(Geom_BSplineSurface) &bSplineSurface, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int discr = 200, int verboseLevel = 0);
 
 void TaperBSS_eval(const Handle(Geom_BSplineSurface) &bSplineSurface, TaperParams &taperParams, Standard_Integer discr = 200, int verboseLevel = 0);
 
+/**
+ * Taper an Edge by tapering its approximated or underlying BSpline
+ * @param edge 
+ * @param ax 
+ * @param taperFunc 
+ * @param taperType 
+ * @param verboseLevel 
+ */
 void TaperEdge(TopoDS_Edge &edge,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 void TaperEdge(TopoDS_Edge &edge,TaperParams &taperParams, int verboseLevel = 0);
 
+/**
+ * Taper a wire by tapering its approximated or underlying BSpline, using TaperEdge
+ * @param wire 
+ * @param ax 
+ * @param taperFunc 
+ * @param taperType 
+ * @param verboseLevel 
+ */
 void TaperWire(TopoDS_Wire &wire,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 void TaperWire(TopoDS_Wire &wire,TaperParams &taperParams, int verboseLevel = 0);
 
+/**
+ * Taper a Face by tapering its approximated or underlying BSpline Surface
+ * @param face 
+ * @param ax 
+ * @param taperFunc 
+ * @param taperType 
+ * @param verboseLevel 
+ */
 void TaperFace(TopoDS_Face &face,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 void TaperFace(TopoDS_Face &face,TaperParams &taperParams, int verboseLevel = 0);
 
 /**
- * Taper a shape by tapering its sub-components
+ * Taper a shape by tapering its faces
  * @param shape
  * @param ax
  * @param taperFunc
@@ -191,6 +226,14 @@ void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard
 
 void TaperShape(TopoDS_Shape &shape, TaperParams &taperParams, int verboseLevel = 0);
 
+/**
+ * Taper a shape and its wireframe (each face wire)
+ * @param shape
+ * @param ax
+ * @param taperFunc
+ * @param taperType
+ * @param verboseLevel
+ */
 void TaperShape_wireFrame(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 
