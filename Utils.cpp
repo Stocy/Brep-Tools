@@ -41,6 +41,7 @@
 #include <GeomLib.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_HSurface.hxx>
+#include <TopOpeBRepBuild_ShapeSet.hxx>
 
 
 #define TOL 0.0001
@@ -623,13 +624,12 @@ void TaperFace(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Re
     Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
     TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
 
-/*
- * >TODO corriger en utilisant le outer wire
- * ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
-    const TopoDS_Compound& wires = freeBounds.GetClosedWires();
-    TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
-    TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
-    TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);*/
+//  TODO use outer wire of face to bound properly the new face
+//  ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
+//  const TopoDS_Compound& wires = freeBounds.GetClosedWires();
+//  TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
+//  TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
+//  TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
 
     BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface,TOL);
     face = makeFace.Face();
@@ -645,6 +645,12 @@ void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard
     TopoDS_Compound compound;
     BRep_Builder builder;
     builder.MakeCompound(compound);
+
+//    TODO use neighbors exploration instead of TopExp_Explorer to stitch new shape together
+//    TopOpeBRepBuild_ShapeSet shapeSet(TopAbs_FACE);
+//    shapeSet.AddStartElement(shape);
+//    shapeSet.FindNeighbours();
+
 
     for (TopExp_Explorer faceExplorer(shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next()) {
         TopoDS_Face face = TopoDS::Face(faceExplorer.Current());
