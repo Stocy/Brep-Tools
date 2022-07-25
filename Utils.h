@@ -178,7 +178,7 @@ void TaperFace(TopoDS_Face &face,gp_Ax3 &ax, function<Standard_Real(Standard_Rea
 void TaperFace(TopoDS_Face &face,TaperParams &taperParams, int verboseLevel = 0);
 
 /**
- * Taper a shape by tapering its sub components
+ * Taper a shape by tapering its sub-components
  * @param shape
  * @param ax
  * @param taperFunc
@@ -190,6 +190,11 @@ void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard
 
 
 void TaperShape(TopoDS_Shape &shape, TaperParams &taperParams, int verboseLevel = 0);
+
+void TaperShape_wireFrame(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+
+
+void TaperShape_wireFrame(TopoDS_Shape &shape, TaperParams &taperParams, int verboseLevel = 0);
 
 void setColor(TopoDS_Shape);
 
