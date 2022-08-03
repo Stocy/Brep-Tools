@@ -209,8 +209,10 @@ void TaperWire(TopoDS_Wire &wire,TaperParams &taperParams, int verboseLevel = 0)
  * @param verboseLevel 
  */
 void TaperFace(TopoDS_Face &face,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
+void TaperFace2(TopoDS_Face &face,gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType, int verboseLevel = 0);
 
 void TaperFace(TopoDS_Face &face,TaperParams &taperParams, int verboseLevel = 0);
+void TaperFace2(TopoDS_Face &face,TaperParams &taperParams, int verboseLevel = 0);
 
 /**
  * Taper a shape by tapering its faces

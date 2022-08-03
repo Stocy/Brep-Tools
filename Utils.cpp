@@ -639,6 +639,51 @@ void TaperFace(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Re
 
 }
 
+void TaperFace(TopoDS_Face &face, TaperParams &taperParams, int verboseLevel) {
+    TaperFace(face,taperParams.axis,taperParams.func,taperParams.type,verboseLevel);
+}
+
+void TaperFace2(TopoDS_Face &face, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc, TAPER_TYPE taperType,
+                int verboseLevel) {
+
+    if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
+
+    GeomAbs_Shape absShape = GeomAbs_C2;
+
+    TopoDS_Wire compound;
+    BRep_Builder builder;
+    builder.MakeWire(compound);
+
+    Handle(BRepAdaptor_HSurface) hSurface = new BRepAdaptor_HSurface(face);
+//    const Handle(Geom_Surface) &surface = BRep_Tool::Surface(TopoDS::Face(face));
+
+    GeomConvert_ApproxSurface approxSurface(hSurface,TOL,absShape,absShape,10,10,10,1);
+    Handle(Geom_BSplineSurface) bsSurface = approxSurface.Surface();
+    TaperBSS(bsSurface,ax,taperFunc,taperType,verboseLevel-1);
+
+//  TODO use outer wire of face to bound properly the new face
+  ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
+  const TopoDS_Compound& wires = freeBounds.GetClosedWires();
+//  TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
+//  TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
+//  TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
+
+    BRepBuilderAPI_MakeFace makeFace = BRepBuilderAPI_MakeFace(bsSurface,TOL);
+    for(TopExp_Explorer explorerWire(wires, TopAbs_WIRE);explorerWire.More();explorerWire.Next()){
+        TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
+        TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
+        makeFace.Add(wire);
+    }
+    face = makeFace.Face();
+    //ExportSTEP(compound,"wires.step","mm");
+    //face = TopoDS::Face(compound);
+
+}
+
+void TaperFace2(TopoDS_Face &face, TaperParams &taperParams, int verboseLevel) {
+    TaperFace2(face,taperParams.axis,taperParams.func,taperParams.type,verboseLevel);
+}
+
 void TaperShape(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Real(Standard_Real)> &taperFunc,
                 TAPER_TYPE taperType, int verboseLevel) {
     if (verboseLevel>0) cout << std::string(verboseLevel, '-') << " function " << __FUNCTION__ << endl;
@@ -688,20 +733,23 @@ void TaperShape_wireFrame(TopoDS_Shape &shape, gp_Ax3 &ax, function<Standard_Rea
     TopoDS_Compound compound;
     BRep_Builder builder;
     builder.MakeCompound(compound);
+    TopTools_ListOfShape wires_edges;
 
     for (TopExp_Explorer faceExplorer(shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next()) {
         TopoDS_Face face = TopoDS::Face(faceExplorer.Current());
 
         ShapeAnalysis_FreeBounds freeBounds = ShapeAnalysis_FreeBounds(face);
+
         const TopoDS_Compound& wires = freeBounds.GetClosedWires();
-        TopExp_Explorer explorerWire(wires, TopAbs_WIRE);
-        TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
-        TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
+        for(TopExp_Explorer explorerWire(wires, TopAbs_WIRE);explorerWire.More();explorerWire.Next()){
+            TopoDS_Wire wire(TopoDS::Wire(explorerWire.Current()));
+            TaperWire(wire,ax,taperFunc,taperType,verboseLevel-1);
+            builder.Add(compound,wire);
+        }
 
         TaperFace(face,ax,taperFunc,taperType,verboseLevel-1);
-
         builder.Add(compound,face);
-        builder.Add(compound,wire);
+
     }
     shape = compound;
 }
@@ -710,3 +758,7 @@ void TaperShape_wireFrame(TopoDS_Shape &shape, TaperParams &taperParams, int ver
     TaperShape_wireFrame(shape,taperParams.axis,taperParams.func,taperParams.type,verboseLevel);
 
 }
+
+
+
+

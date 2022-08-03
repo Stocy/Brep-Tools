@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
     TopoDS_Shape t_face = ReadStep(string(SRCDIR) + "/test_wire_closed.step");
     TopoDS_Shape tol_test = ReadStep(string(SRCDIR) + stepFolder + "/tol.step");
     TopoDS_Shape pyramid = ReadStep(string(SRCDIR) + stepFolder + "/Pyramid.stp");
+    TopoDS_Shape test_cube = ReadStep(string(SRCDIR) + stepFolder + "/test_cube.step");
     TopExp_Explorer explorer(t_face, TopAbs_WIRE);
     TopoDS_Wire wire = TopoDS::Wire(explorer.Current());
     TopoDS_Shape cube = BRepPrimAPI_MakeBox(gp_Pnt(-10, 0, -10), gp_Pnt(10, 10, 10));
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
     //applying tapering
 
     //set parameters for operation ie working plane/axis
-    gp_Ax3 op_axis(gp_Pnt(-0.001, -0.001, 0), gp_Dir(0, 1, 0));
+    gp_Ax3 op_axis(gp_Pnt(-0.001, -0.001, 0), gp_Dir(0, 0, 1));
 
     //create taper function on the fly
     //taper function need only one argument, if more needed, use a function with more arguments
@@ -76,7 +77,7 @@ int main(int argc, char **argv) {
     //more function in TaperFunctions namespace
 
     TaperParams displacementTaper{
-            op_axis, SCALE, TaperFunctions::displacement(10, 10, -3)
+            op_axis, SCALE, TaperFunctions::displacement(10, 10, -1)
     };
 
     TaperParams linear{
@@ -92,6 +93,9 @@ int main(int argc, char **argv) {
 //
     TaperShape_wireFrame(cube, displacementTaper, 3);
     ExportSTEP(cube, "testCube.step", "mm");
+
+    TaperShape_wireFrame(test_cube, displacementTaper, 3);
+    ExportSTEP(test_cube, "test_cube_out.step", "mm");
 //
 //    TaperShape(sphere, linear, 3);
 //    ExportSTEP(sphere, "testSphere.step", "mm");
